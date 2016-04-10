@@ -57,4 +57,13 @@ public class SecurityGroup implements Comparable<SecurityGroup> {
         if(o.name == null) return 1;
         return this.name.compareTo(o.name);
     }
+
+    @Override
+    public String toString() {
+        return "SecurityGroup{" +
+                "name='" + name + '\'' +
+                ", members=" + members +
+                ", access=" + access +
+                '}';
+    }
 }

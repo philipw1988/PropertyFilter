@@ -77,4 +77,13 @@ public class Access implements Comparable<Access> {
         if(o.objectClass == null) return 1;
         return this.objectClass.compareTo(o.objectClass);
     }
+
+    @Override
+    public String toString() {
+        return "Access{" +
+                "objectClass='" + objectClass + '\'' +
+                ", access=" + access +
+                ", permissions=" + permissions +
+                '}';
+    }
 }

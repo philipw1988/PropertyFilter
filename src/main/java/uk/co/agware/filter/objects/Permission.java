@@ -74,4 +74,13 @@ public class Permission implements Comparable<Permission> {
         if(o.displayName == null) return 1;
         return this.displayName.compareTo(o.displayName);
     }
+
+    @Override
+    public String toString() {
+        return "Permission{" +
+                "propertyName='" + propertyName + '\'' +
+                ", displayName='" + displayName + '\'' +
+                ", permission=" + permission +
+                '}';
+    }
 }

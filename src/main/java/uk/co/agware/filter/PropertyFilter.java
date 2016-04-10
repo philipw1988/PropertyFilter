@@ -11,6 +11,7 @@ import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -18,14 +19,29 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * Created by Philip Ward <Philip.Ward@agware.com> on 9/04/2016.
  */
-//TODO change to fully qualified package name in lowercase for the keys
+//TODO Need to handle errors a bit better, probably worth creating an exception to throw for the parse methods
 public class PropertyFilter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PropertyFilter.class);
     private static final ReadWriteLock lock = new ReentrantReadWriteLock();
+    private static final List<Class> COLLECTION_CLASSES = new ArrayList<>(Arrays.asList(String.class, Integer.class, Double.class, Float.class, BigDecimal.class, Boolean.class, Byte.class, Date.class)); // Not efficient, but a lazy way to do it in one line
 
     private static final Map<String, Map<String, Access>> groups = new HashMap<>();
     private static final Map<String, String> userToGroup = new HashMap<>();
+
+    public boolean collectionClassesContains(Class clazz){
+        return COLLECTION_CLASSES.contains(clazz);
+    }
+
+    public void addCollectionClass(Class clazz){
+        if(!COLLECTION_CLASSES.contains(clazz)) {
+            COLLECTION_CLASSES.add(clazz);
+        }
+    }
+
+    public boolean removeCollectionClass(Class clazz){
+        return COLLECTION_CLASSES.remove(clazz);
+    }
 
     /**
      * Refreshes the groups listing
@@ -47,7 +63,7 @@ public class PropertyFilter {
         lock.writeLock().unlock();
     }
 
-    private Map<String, Access> getGroup(String key){
+    public Map<String, Access> getGroup(String key){
         return groups.get(key);
     }
 
@@ -76,6 +92,10 @@ public class PropertyFilter {
         return getAccessibleFields(target.getClass().getName(), username);
     }
 
+    public List<Permission> getAccessibleFields(Class clazz, String username){
+        return getAccessibleFields(clazz.getName(), username);
+    }
+
     public List<Permission> getAccessibleFields(String className, String username){
         lock.readLock().lock();
         String userGroup = getUsersGroup(username);
@@ -94,21 +114,27 @@ public class PropertyFilter {
     }
 
     public Access getAccessFromObject(Object target, String username){
-        return getAccessFromClass(target.getClass().getName(), username);
+        return getAccessFromClassName(target.getClass().getName(), username);
     }
 
-    public Access getAccessFromClass(String className, String username){
+    public Access getAccessFromClass(Class clazz, String username){
+        return getAccessFromClassName(clazz.getName(), username);
+    }
+
+    public Access getAccessFromClassName(String className, String username){
         String userGroup = getUsersGroup(username);
         if(userGroup == null) return null;
         Map<String, Access> accessMap = groups.get(userGroup);
         if(accessMap == null) return null;
-        Access access = accessMap.get(className.toLowerCase());
+        Access access = accessMap.get(className);
         if(access == null) return null;
 
         return access;
     }
 
-    public Object parseObjectForReturn(Object object, String username){
+    //TODO Handle lists
+    @SuppressWarnings("unchecked")
+    public <T> T parseObjectForReturn(T object, String username){
         String userGroup = getUsersGroup(username);
         if(userGroup == null){
             LOGGER.warn("User {} has no group", username);
@@ -122,55 +148,140 @@ public class PropertyFilter {
             return null;
         }
 
-        Object obj = ClassUtil.instantiateObject(object.getClass()); // Create a blank object to fill with values //TODO error on no default constructor
+        T obj = (T) ClassUtil.instantiateObject(object.getClass()); // Create a blank object to fill with values
+        if(obj == null) return null;
         try {
             Access access = accessMap.get(object.getClass().getName());
             if(access != null && !access.getAccess().equals(Access.Type.NO_ACCESS)) {
                 for (Field f : fields) {
-                    if (ClassUtil.isFieldReadable(f.getName(), access) ) {
+                    if (ClassUtil.isFieldReadable(f.getName(), access) ) { //TODO handle collections
                         PropertyDescriptor pd = new PropertyDescriptor(f.getName(), object.getClass());
                         Object value = pd.getReadMethod().invoke(object);
-                        if(value instanceof Object){ //TODO
-                            value = parseObjectForReturn(value, userGroup);
+                        if (!Collection.class.isAssignableFrom(f.getType())) {
+                            pd.getWriteMethod().invoke(obj, value);
                         }
-                        pd.getWriteMethod().invoke(obj, value);
+                        else {
+                            if(value != null){
+                                pd.getWriteMethod().invoke(obj, handleCollectionForReturn((Collection) value, username));
+                            }
+                        }
                     }
                 }
             }
+            else {
+                return null;
+            }
         } catch (IntrospectionException | InvocationTargetException | IllegalAccessException e) {
             LOGGER.error(e.getMessage(), e);
+            return null;
         }
         return obj;
     }
 
-    public Object parseObjectForSaving(Object newObject, Object existingObject, String username) throws IllegalAccessException {
+    @SuppressWarnings("unchecked")
+    private Collection handleCollectionForReturn(Collection collection, String username){
+        Collection result = (Collection) ClassUtil.instantiateObject(collection.getClass());
+        if(result == null) return null;
+        for(Object o : collection){
+            if(COLLECTION_CLASSES.contains(o.getClass())){
+                result.add(o);
+            }
+            else {
+                result.add(parseObjectForReturn(o, username));
+            }
+        }
+        return result;
+    }
+
+    //TODO doesn't alert to missing permissions
+    //TODO Worry about maps
+    public boolean parseObjectForSaving(Object newObject, Object existingObject, String username) throws IllegalAccessException {
         String userGroup = getUsersGroup(username);
         if(userGroup == null) {
             LOGGER.debug("User {} has no group", username);
-            return null;
+            return false;
         }
 
         Set<Field> fields = ClassUtil.getAllFields(newObject);
         Map<String, Access> accessMap = getGroup(userGroup);
 
-        Access access = accessMap.get(newObject.getClass().getSimpleName());
+        Access access = accessMap.get(newObject.getClass().getName());
         if (access != null && !access.getAccess().equals(Access.Type.NO_ACCESS) && !access.getAccess().equals(Access.Type.READ)) {
             try {
                 for (Field f : fields) {
-                    if (!Collection.class.isAssignableFrom(f.getType()) && ClassUtil.isFieldWritable(f.getName(), access)) { // We can skip collections
+                    if(ClassUtil.isFieldWritable(f.getName(), access)) {
                         PropertyDescriptor pd = new PropertyDescriptor(f.getName(), newObject.getClass());
-                        Object value = pd.getReadMethod().invoke(newObject);
-                        pd.getWriteMethod().invoke(existingObject, value);
+                        Object newValue = pd.getReadMethod().invoke(newObject);
+                        if (!Collection.class.isAssignableFrom(f.getType())) {
+                            pd.getWriteMethod().invoke(existingObject, newValue);
+                        }
+                        else {
+                            if(newValue == null){
+                                pd.getWriteMethod().invoke(existingObject, newValue);
+                            }
+                            else {
+                                Collection newCollection = (Collection)newValue;
+                                Collection existingCollection = (Collection) pd.getReadMethod().invoke(existingObject);
+                                handleCollectionsForSaving(existingCollection, newCollection, username);
+                            }
+                        }
                     }
                 }
             } catch (IntrospectionException | InvocationTargetException | IllegalAccessException e) {
                 LOGGER.error(e.getMessage(), e);
+                return false;
             }
         }
         else {
             LOGGER.warn("User {} attempting to parse object {}, which they do not have access to", username, newObject.getClass().getSimpleName());
             throw new IllegalAccessException("Trying to save an object for which the user has no access");
         }
-        return existingObject;
+        return true;
+    }
+
+    @SuppressWarnings("unchecked")
+    private boolean handleCollectionsForSaving(Collection exitingCollection, Collection newCollection, String username){
+        // If existing collection is null, create a new list to store all the values in
+        if(exitingCollection == null) {
+            exitingCollection = (Collection) ClassUtil.instantiateObject(newCollection.getClass());
+            if(exitingCollection == null){
+                return false;
+            }
+        }
+        // For everything in the exiting collection, if new collection doesn't contain it, remove it
+        for(Iterator<Object> itr = exitingCollection.iterator(); itr.hasNext();){
+            Object o = itr.next();
+            if(!newCollection.contains(o)){
+                itr.remove();
+            }
+        }
+        for(Object newVal : newCollection){
+            // For everything in the new collection, check it isn't in the primitive type
+            if(COLLECTION_CLASSES.contains(newVal.getClass()) && !exitingCollection.contains(newVal)){ // If it's a type that wont have an access type set for it, i.e. a "primitive" type where you just want the value as is
+                exitingCollection.add(newVal);
+            }
+            else {
+                // if not then find the one in the existing collection
+                Object existingVal = null;
+                for(Object o : exitingCollection){
+                    if(o.equals(newVal)){
+                        existingVal = o;
+                        break;
+                    }
+                }
+                // Run the save method over the two of them
+                try {
+                    if(existingVal == null){
+                        existingVal = ClassUtil.instantiateObject(newVal.getClass());
+                    }
+                    parseObjectForSaving(newVal, existingVal, username);
+                    exitingCollection.add(existingVal);
+                } catch (IllegalAccessException e) {
+                    LOGGER.error(e.getMessage(), e);
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }
