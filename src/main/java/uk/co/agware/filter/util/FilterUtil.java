@@ -15,13 +15,14 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by Philip Ward <Philip.Ward@agware.com> on 20/02/2016.
  */
-public class ClassUtil {
+public class FilterUtil {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ClassUtil.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FilterUtil.class);
     private static Access.Type DEFAULT_ACCESS_TYPE = Access.Type.NO_ACCESS;
     private static Permission.Type DEFAULT_PERMISSION_TYPE = Permission.Type.NO_ACCESS;
 
@@ -41,6 +42,7 @@ public class ClassUtil {
                     return c.newInstance();
                 } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
                     LOGGER.error(e.getMessage(), e);
+                    return null;
                 }
             }
         }
@@ -93,9 +95,7 @@ public class ClassUtil {
             ClassPath classPath = ClassPath.from(Thread.currentThread().getContextClassLoader());
             Set<ClassPath.ClassInfo> classInfo = classPath.getTopLevelClasses(path);
             List<Class> classes = new ArrayList<>(classInfo.size());
-            for(ClassPath.ClassInfo c : classInfo){
-                classes.add(c.load());
-            }
+            classes.addAll(classInfo.stream().map(ClassPath.ClassInfo::load).collect(Collectors.toList()));
             return classes;
         } catch (IOException e) {
             LOGGER.error(e.getMessage(), e);

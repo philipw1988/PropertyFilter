@@ -1,6 +1,6 @@
 package uk.co.agware.filter.objects;
 
-import uk.co.agware.filter.util.ClassUtil;
+import uk.co.agware.filter.util.FilterUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,8 +23,8 @@ public class Access implements Comparable<Access> {
         if(access == null) throw new IllegalArgumentException("Trying to create a copy of a null Access");
         this.objectClass = access.getObjectClass();
         this.access = access.getAccess();
-        this.permissions = new ArrayList<>(ClassUtil.checkNull(access.getPermissions()).size());
-        permissions.addAll(ClassUtil.checkNull(access.getPermissions()).stream().map(Permission::new).collect(Collectors.toList()));
+        this.permissions = new ArrayList<>(FilterUtil.checkNull(access.getPermissions()).size());
+        permissions.addAll(FilterUtil.checkNull(access.getPermissions()).stream().map(Permission::new).collect(Collectors.toList()));
     }
 
     public String getObjectClass() {

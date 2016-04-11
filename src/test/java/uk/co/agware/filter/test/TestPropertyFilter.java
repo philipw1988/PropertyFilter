@@ -9,7 +9,7 @@ import uk.co.agware.filter.objects.Permission;
 import uk.co.agware.filter.objects.SecurityGroup;
 import uk.co.agware.filter.test.classes.SecondTestClass;
 import uk.co.agware.filter.test.classes.TestClass;
-import uk.co.agware.filter.util.ClassUtil;
+import uk.co.agware.filter.util.FilterUtil;
 
 import java.util.Collections;
 import java.util.List;
@@ -29,8 +29,8 @@ public class TestPropertyFilter {
     public void setUp(){
         propertyFilter = new PropertyFilter();
 
-        ClassUtil.setDefaultAccessType(Access.Type.NO_ACCESS);
-        List<Access> accessList = ClassUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        FilterUtil.setDefaultAccessType(Access.Type.NO_ACCESS);
+        List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
         SecurityGroup group = new SecurityGroup();
         group.setName(groupName);
         group.setAccess(accessList);
@@ -62,8 +62,8 @@ public class TestPropertyFilter {
     public void testGetAvailableClasses(){
         Assert.assertEquals(propertyFilter.getAccessibleClasses(username).size(), 0);
 
-        ClassUtil.setDefaultAccessType(Access.Type.CREATE);
-        List<Access> accessList = ClassUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        FilterUtil.setDefaultAccessType(Access.Type.CREATE);
+        List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
         SecurityGroup group = new SecurityGroup();
         group.setName(groupName);
         group.setAccess(accessList);
@@ -72,8 +72,8 @@ public class TestPropertyFilter {
 
         Assert.assertEquals(propertyFilter.getAccessibleClasses(username).size(), 2);
 
-        ClassUtil.setDefaultAccessType(Access.Type.READ);
-        accessList = ClassUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        FilterUtil.setDefaultAccessType(Access.Type.READ);
+        accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
         group = new SecurityGroup();
         group.setName(groupName);
         group.setAccess(accessList);
@@ -82,8 +82,8 @@ public class TestPropertyFilter {
 
         Assert.assertEquals(propertyFilter.getAccessibleClasses(username).size(), 2);
 
-        ClassUtil.setDefaultAccessType(Access.Type.UPDATE);
-        accessList = ClassUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        FilterUtil.setDefaultAccessType(Access.Type.UPDATE);
+        accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
         group = new SecurityGroup();
         group.setName(groupName);
         group.setAccess(accessList);

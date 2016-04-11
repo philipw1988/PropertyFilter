@@ -9,7 +9,7 @@ import uk.co.agware.filter.objects.Permission;
 import uk.co.agware.filter.objects.SecurityGroup;
 import uk.co.agware.filter.test.classes.SecondTestClass;
 import uk.co.agware.filter.test.classes.TestClass;
-import uk.co.agware.filter.util.ClassUtil;
+import uk.co.agware.filter.util.FilterUtil;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -95,9 +95,9 @@ public class TestPropertyFilterSave {
     @Test
     public void testNoAccess(){
         propertyFilter = new PropertyFilter();
-        ClassUtil.setDefaultAccessType(Access.Type.NO_ACCESS);
-        ClassUtil.setDefaultPermissionType(Permission.Type.NO_ACCESS);
-        List<Access> accessList = ClassUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        FilterUtil.setDefaultAccessType(Access.Type.NO_ACCESS);
+        FilterUtil.setDefaultPermissionType(Permission.Type.NO_ACCESS);
+        List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
         SecurityGroup group = new SecurityGroup();
         group.setName(groupName);
         group.setAccess(accessList);
@@ -116,9 +116,9 @@ public class TestPropertyFilterSave {
     @Test
     public void testReadAccess(){
         propertyFilter = new PropertyFilter();
-        ClassUtil.setDefaultAccessType(Access.Type.READ);
-        ClassUtil.setDefaultPermissionType(Permission.Type.NO_ACCESS);
-        List<Access> accessList = ClassUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        FilterUtil.setDefaultAccessType(Access.Type.READ);
+        FilterUtil.setDefaultPermissionType(Permission.Type.NO_ACCESS);
+        List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
         SecurityGroup group = new SecurityGroup();
         group.setName(groupName);
         group.setAccess(accessList);
@@ -137,9 +137,9 @@ public class TestPropertyFilterSave {
     @Test
     public void testUpdateAccessNoPermissions(){
         propertyFilter = new PropertyFilter();
-        ClassUtil.setDefaultAccessType(Access.Type.UPDATE);
-        ClassUtil.setDefaultPermissionType(Permission.Type.NO_ACCESS);
-        List<Access> accessList = ClassUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        FilterUtil.setDefaultAccessType(Access.Type.UPDATE);
+        FilterUtil.setDefaultPermissionType(Permission.Type.NO_ACCESS);
+        List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
         SecurityGroup group = new SecurityGroup();
         group.setName(groupName);
         group.setAccess(accessList);
@@ -163,9 +163,9 @@ public class TestPropertyFilterSave {
     @Test
     public void testCreateAccessNoPermissions(){
         propertyFilter = new PropertyFilter();
-        ClassUtil.setDefaultAccessType(Access.Type.CREATE);
-        ClassUtil.setDefaultPermissionType(Permission.Type.NO_ACCESS);
-        List<Access> accessList = ClassUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        FilterUtil.setDefaultAccessType(Access.Type.CREATE);
+        FilterUtil.setDefaultPermissionType(Permission.Type.NO_ACCESS);
+        List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
         SecurityGroup group = new SecurityGroup();
         group.setName(groupName);
         group.setAccess(accessList);
@@ -189,9 +189,9 @@ public class TestPropertyFilterSave {
     @Test
     public void testUpdateAccessWritePermissions(){
         propertyFilter = new PropertyFilter();
-        ClassUtil.setDefaultAccessType(Access.Type.UPDATE);
-        ClassUtil.setDefaultPermissionType(Permission.Type.WRITE);
-        List<Access> accessList = ClassUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        FilterUtil.setDefaultAccessType(Access.Type.UPDATE);
+        FilterUtil.setDefaultPermissionType(Permission.Type.WRITE);
+        List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
         SecurityGroup group = new SecurityGroup();
         group.setName(groupName);
         group.setAccess(accessList);
@@ -219,9 +219,9 @@ public class TestPropertyFilterSave {
     @Test
     public void testCreateAccessWritePermissions(){
         propertyFilter = new PropertyFilter();
-        ClassUtil.setDefaultAccessType(Access.Type.CREATE);
-        ClassUtil.setDefaultPermissionType(Permission.Type.WRITE);
-        List<Access> accessList = ClassUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        FilterUtil.setDefaultAccessType(Access.Type.CREATE);
+        FilterUtil.setDefaultPermissionType(Permission.Type.WRITE);
+        List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
         SecurityGroup group = new SecurityGroup();
         group.setName(groupName);
         group.setAccess(accessList);

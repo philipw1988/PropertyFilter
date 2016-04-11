@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 import uk.co.agware.filter.objects.Access;
 import uk.co.agware.filter.objects.Permission;
 import uk.co.agware.filter.objects.SecurityGroup;
-import uk.co.agware.filter.util.ClassUtil;
+import uk.co.agware.filter.util.FilterUtil;
 
 import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
@@ -20,27 +20,29 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * Created by Philip Ward <Philip.Ward@agware.com> on 9/04/2016.
  */
 //TODO Need to handle errors a bit better, probably worth creating an exception to throw for the parse methods
+//TODO I think I only half did the ReadWriteLock stuff...
+//TODO Put better commends on methods to explain what they're doing
 public class PropertyFilter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PropertyFilter.class);
     private static final ReadWriteLock lock = new ReentrantReadWriteLock();
-    private static final List<Class> COLLECTION_CLASSES = new ArrayList<>(Arrays.asList(String.class, Integer.class, Double.class, Float.class, BigDecimal.class, Boolean.class, Byte.class, Date.class)); // Not efficient, but a lazy way to do it in one line
+    private static final List<Class> IGNORED_CLASSES = new ArrayList<>(Arrays.asList(String.class, Integer.class, Double.class, Float.class, BigDecimal.class, Boolean.class, Byte.class, Date.class)); // Not efficient, but a lazy way to do it in one line
 
     private static final Map<String, Map<String, Access>> groups = new HashMap<>();
     private static final Map<String, String> userToGroup = new HashMap<>();
 
     public boolean collectionClassesContains(Class clazz){
-        return COLLECTION_CLASSES.contains(clazz);
+        return IGNORED_CLASSES.contains(clazz);
     }
 
     public void addCollectionClass(Class clazz){
-        if(!COLLECTION_CLASSES.contains(clazz)) {
-            COLLECTION_CLASSES.add(clazz);
+        if(!IGNORED_CLASSES.contains(clazz)) {
+            IGNORED_CLASSES.add(clazz);
         }
     }
 
     public boolean removeCollectionClass(Class clazz){
-        return COLLECTION_CLASSES.remove(clazz);
+        return IGNORED_CLASSES.remove(clazz);
     }
 
     /**
@@ -50,13 +52,13 @@ public class PropertyFilter {
         lock.writeLock().lock();
         groups.clear();
         userToGroup.clear();
-        for (SecurityGroup g : ClassUtil.checkNull(securityGroups)) {
+        for (SecurityGroup g : FilterUtil.checkNull(securityGroups)) {
             Map<String, Access> accessMap = new HashMap<>();
-            for (Access a : ClassUtil.checkNull(g.getAccess())) {
+            for (Access a : FilterUtil.checkNull(g.getAccess())) {
                 accessMap.put(a.getObjectClass(), a);
             }
             groups.put(g.getName(), accessMap);
-            for (String s : ClassUtil.checkNull(g.getMembers())) {
+            for (String s : FilterUtil.checkNull(g.getMembers())) {
                 userToGroup.put(s.toUpperCase(), g.getName());
             }
         }
@@ -104,7 +106,7 @@ public class PropertyFilter {
         Access access = accessMap.get(className);
         if(access == null) return null;
         List<Permission> results = new ArrayList<>();
-        for(Permission p : ClassUtil.checkNull(access.getPermissions())){
+        for(Permission p : FilterUtil.checkNull(access.getPermissions())){
             if(!p.getPermission().equals(Permission.Type.NO_ACCESS)){
                 results.add(new Permission(p));
             }
@@ -141,20 +143,20 @@ public class PropertyFilter {
             return null;
         }
 
-        Set<Field> fields = ClassUtil.getAllFields(object);
+        Set<Field> fields = FilterUtil.getAllFields(object);
         Map<String, Access> accessMap = getGroup(userGroup);
         if(accessMap == null) {
             LOGGER.error("No Access defined for object {} in group {}", object.getClass().getName(), userGroup);
             return null;
         }
 
-        T obj = (T) ClassUtil.instantiateObject(object.getClass()); // Create a blank object to fill with values
+        T obj = (T) FilterUtil.instantiateObject(object.getClass()); // Create a blank object to fill with values
         if(obj == null) return null;
         try {
             Access access = accessMap.get(object.getClass().getName());
             if(access != null && !access.getAccess().equals(Access.Type.NO_ACCESS)) {
                 for (Field f : fields) {
-                    if (ClassUtil.isFieldReadable(f.getName(), access) ) { //TODO handle collections
+                    if (FilterUtil.isFieldReadable(f.getName(), access) ) { //TODO handle collections
                         PropertyDescriptor pd = new PropertyDescriptor(f.getName(), object.getClass());
                         Object value = pd.getReadMethod().invoke(object);
                         if (!Collection.class.isAssignableFrom(f.getType())) {
@@ -180,10 +182,10 @@ public class PropertyFilter {
 
     @SuppressWarnings("unchecked")
     private Collection handleCollectionForReturn(Collection collection, String username){
-        Collection result = (Collection) ClassUtil.instantiateObject(collection.getClass());
+        Collection result = (Collection) FilterUtil.instantiateObject(collection.getClass());
         if(result == null) return null;
         for(Object o : collection){
-            if(COLLECTION_CLASSES.contains(o.getClass())){
+            if(IGNORED_CLASSES.contains(o.getClass())){
                 result.add(o);
             }
             else {
@@ -202,14 +204,14 @@ public class PropertyFilter {
             return false;
         }
 
-        Set<Field> fields = ClassUtil.getAllFields(newObject);
+        Set<Field> fields = FilterUtil.getAllFields(newObject);
         Map<String, Access> accessMap = getGroup(userGroup);
 
         Access access = accessMap.get(newObject.getClass().getName());
         if (access != null && !access.getAccess().equals(Access.Type.NO_ACCESS) && !access.getAccess().equals(Access.Type.READ)) {
             try {
                 for (Field f : fields) {
-                    if(ClassUtil.isFieldWritable(f.getName(), access)) {
+                    if(FilterUtil.isFieldWritable(f.getName(), access)) {
                         PropertyDescriptor pd = new PropertyDescriptor(f.getName(), newObject.getClass());
                         Object newValue = pd.getReadMethod().invoke(newObject);
                         if (!Collection.class.isAssignableFrom(f.getType())) {
@@ -243,7 +245,7 @@ public class PropertyFilter {
     private boolean handleCollectionsForSaving(Collection exitingCollection, Collection newCollection, String username){
         // If existing collection is null, create a new list to store all the values in
         if(exitingCollection == null) {
-            exitingCollection = (Collection) ClassUtil.instantiateObject(newCollection.getClass());
+            exitingCollection = (Collection) FilterUtil.instantiateObject(newCollection.getClass());
             if(exitingCollection == null){
                 return false;
             }
@@ -257,7 +259,7 @@ public class PropertyFilter {
         }
         for(Object newVal : newCollection){
             // For everything in the new collection, check it isn't in the primitive type
-            if(COLLECTION_CLASSES.contains(newVal.getClass()) && !exitingCollection.contains(newVal)){ // If it's a type that wont have an access type set for it, i.e. a "primitive" type where you just want the value as is
+            if(IGNORED_CLASSES.contains(newVal.getClass()) && !exitingCollection.contains(newVal)){ // If it's a type that wont have an access type set for it, i.e. a "primitive" type where you just want the value as is
                 exitingCollection.add(newVal);
             }
             else {
@@ -272,7 +274,7 @@ public class PropertyFilter {
                 // Run the save method over the two of them
                 try {
                     if(existingVal == null){
-                        existingVal = ClassUtil.instantiateObject(newVal.getClass());
+                        existingVal = FilterUtil.instantiateObject(newVal.getClass());
                     }
                     parseObjectForSaving(newVal, existingVal, username);
                     exitingCollection.add(existingVal);

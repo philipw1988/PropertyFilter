@@ -9,7 +9,7 @@ import uk.co.agware.filter.objects.Permission;
 import uk.co.agware.filter.objects.SecurityGroup;
 import uk.co.agware.filter.test.classes.SecondTestClass;
 import uk.co.agware.filter.test.classes.TestClass;
-import uk.co.agware.filter.util.ClassUtil;
+import uk.co.agware.filter.util.FilterUtil;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -64,9 +64,9 @@ public class TestPropertyFilterReturn {
     @Test
     public void testReturnNoAccess(){
         propertyFilter = new PropertyFilter();
-        ClassUtil.setDefaultAccessType(Access.Type.NO_ACCESS);
-        ClassUtil.setDefaultPermissionType(Permission.Type.NO_ACCESS);
-        List<Access> accessList = ClassUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        FilterUtil.setDefaultAccessType(Access.Type.NO_ACCESS);
+        FilterUtil.setDefaultPermissionType(Permission.Type.NO_ACCESS);
+        List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
         SecurityGroup group = new SecurityGroup();
         group.setName(groupName);
         group.setAccess(accessList);
@@ -80,9 +80,9 @@ public class TestPropertyFilterReturn {
     @Test
     public void testReturnNoAccessWritePermission(){
         propertyFilter = new PropertyFilter();
-        ClassUtil.setDefaultAccessType(Access.Type.NO_ACCESS);
-        ClassUtil.setDefaultPermissionType(Permission.Type.WRITE);
-        List<Access> accessList = ClassUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        FilterUtil.setDefaultAccessType(Access.Type.NO_ACCESS);
+        FilterUtil.setDefaultPermissionType(Permission.Type.WRITE);
+        List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
         SecurityGroup group = new SecurityGroup();
         group.setName(groupName);
         group.setAccess(accessList);
@@ -96,9 +96,9 @@ public class TestPropertyFilterReturn {
     @Test
     public void testReturnReadAccessNoPermission(){
         propertyFilter = new PropertyFilter();
-        ClassUtil.setDefaultAccessType(Access.Type.READ);
-        ClassUtil.setDefaultPermissionType(Permission.Type.NO_ACCESS);
-        List<Access> accessList = ClassUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        FilterUtil.setDefaultAccessType(Access.Type.READ);
+        FilterUtil.setDefaultPermissionType(Permission.Type.NO_ACCESS);
+        List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
         SecurityGroup group = new SecurityGroup();
         group.setName(groupName);
         group.setAccess(accessList);
@@ -115,9 +115,9 @@ public class TestPropertyFilterReturn {
     @Test
     public void testReturnReadAccessReadPermission(){
         propertyFilter = new PropertyFilter();
-        ClassUtil.setDefaultAccessType(Access.Type.READ);
-        ClassUtil.setDefaultPermissionType(Permission.Type.READ);
-        List<Access> accessList = ClassUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        FilterUtil.setDefaultAccessType(Access.Type.READ);
+        FilterUtil.setDefaultPermissionType(Permission.Type.READ);
+        List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
         SecurityGroup group = new SecurityGroup();
         group.setName(groupName);
         group.setAccess(accessList);
