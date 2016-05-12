@@ -154,12 +154,21 @@ public class PropertyFilter {
     public Access getAccess(String className, String username){
         String userGroup = getUsersGroup(username);
         if(userGroup == null) return null;
-        Map<String, Access> accessMap = groups.get(userGroup);
-        if(accessMap == null) return null;
-        Access access = accessMap.get(className);
-        if(access == null) return null;
+        return getAccessForGroup(className, userGroup);
+    }
 
-        return access;
+    public Access getAccessForGroup(Object target, String groupName){
+        return getAccessForGroup(target.getClass().getName(), groupName);
+    }
+
+    public Access getAccessForGroup(Class clazz, String groupName){
+        return getAccessForGroup(clazz.getName(), groupName);
+    }
+
+    public Access getAccessForGroup(String className, String groupName){
+        Map<String, Access> accessMap = groups.get(groupName);
+        if(accessMap == null) return null;
+        return accessMap.get(className);
     }
 
     //TODO Handle lists

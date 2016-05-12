@@ -170,6 +170,24 @@ public class TestPropertyFilter {
     }
 
     @Test
+    public void testGetAccessFromObjectFromGroup(){
+        Access access = propertyFilter.getAccessForGroup(new TestClass(), propertyFilter.getUsersGroup(username));
+        Assert.assertEquals(TestClass.class.getName(), access.getObjectClass());
+    }
+
+    @Test
+    public void testGetAccessFromClassFromGroup(){
+        Access access = propertyFilter.getAccessForGroup(TestClass.class, propertyFilter.getUsersGroup(username));
+        Assert.assertEquals(TestClass.class.getName(), access.getObjectClass());
+    }
+
+    @Test
+    public void testGetAccessFromClassNameFromGroup(){
+        Access access = propertyFilter.getAccessForGroup(TestClass.class.getName(), propertyFilter.getUsersGroup(username));
+        Assert.assertEquals(TestClass.class.getName(), access.getObjectClass());
+    }
+
+    @Test
     public void testAddUserToGroup(){
         propertyFilter.addUserToGroup("Test Username", groupName);
         Assert.assertEquals(groupName, propertyFilter.getUsersGroup("Test Username"));
