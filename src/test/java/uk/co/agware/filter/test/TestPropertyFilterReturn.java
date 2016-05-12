@@ -6,7 +6,7 @@ import org.junit.Test;
 import uk.co.agware.filter.PropertyFilter;
 import uk.co.agware.filter.objects.Access;
 import uk.co.agware.filter.objects.Permission;
-import uk.co.agware.filter.objects.SecurityGroup;
+import uk.co.agware.filter.objects.Group;
 import uk.co.agware.filter.test.classes.SecondTestClass;
 import uk.co.agware.filter.test.classes.TestClass;
 import uk.co.agware.filter.util.FilterUtil;
@@ -67,11 +67,11 @@ public class TestPropertyFilterReturn {
         FilterUtil.setDefaultAccessType(Access.Type.NO_ACCESS);
         FilterUtil.setDefaultPermissionType(Permission.Type.NO_ACCESS);
         List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
-        SecurityGroup group = new SecurityGroup();
+        Group group = new Group();
         group.setName(groupName);
         group.setAccess(accessList);
         group.setMembers(Collections.singletonList(username));
-        propertyFilter.load(Collections.singletonList(group));
+        propertyFilter.setGroups(Collections.singletonList(group));
 
         Object o = propertyFilter.parseObjectForReturn(testClass, username);
         Assert.assertNull(o);
@@ -83,11 +83,11 @@ public class TestPropertyFilterReturn {
         FilterUtil.setDefaultAccessType(Access.Type.NO_ACCESS);
         FilterUtil.setDefaultPermissionType(Permission.Type.WRITE);
         List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
-        SecurityGroup group = new SecurityGroup();
+        Group group = new Group();
         group.setName(groupName);
         group.setAccess(accessList);
         group.setMembers(Collections.singletonList(username));
-        propertyFilter.load(Collections.singletonList(group));
+        propertyFilter.setGroups(Collections.singletonList(group));
 
         Object o = propertyFilter.parseObjectForReturn(testClass, username);
         Assert.assertNull(o);
@@ -99,11 +99,11 @@ public class TestPropertyFilterReturn {
         FilterUtil.setDefaultAccessType(Access.Type.READ);
         FilterUtil.setDefaultPermissionType(Permission.Type.NO_ACCESS);
         List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
-        SecurityGroup group = new SecurityGroup();
+        Group group = new Group();
         group.setName(groupName);
         group.setAccess(accessList);
         group.setMembers(Collections.singletonList(username));
-        propertyFilter.load(Collections.singletonList(group));
+        propertyFilter.setGroups(Collections.singletonList(group));
 
         TestClass t = propertyFilter.parseObjectForReturn(testClass, username);
         Assert.assertNotNull(t);
@@ -118,15 +118,15 @@ public class TestPropertyFilterReturn {
         FilterUtil.setDefaultAccessType(Access.Type.READ);
         FilterUtil.setDefaultPermissionType(Permission.Type.READ);
         List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
-        SecurityGroup group = new SecurityGroup();
+        Group group = new Group();
         group.setName(groupName);
         group.setAccess(accessList);
         group.setMembers(Collections.singletonList(username));
-        propertyFilter.load(Collections.singletonList(group));
+        propertyFilter.setGroups(Collections.singletonList(group));
 
         TestClass t = propertyFilter.parseObjectForReturn(testClass, username);
         Assert.assertNotNull(t);
-        Assert.assertEquals(t.getTestBD(), testBD1);
+        Assert.assertEquals(testBD1, t.getTestBD());
         for(String s : t.getStringList()){
             Assert.assertTrue(testClass.getStringList().contains(s));
         }

@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.co.agware.filter.objects.Access;
 import uk.co.agware.filter.objects.Permission;
-import uk.co.agware.filter.objects.SecurityGroup;
+import uk.co.agware.filter.objects.Group;
 import uk.co.agware.filter.util.FilterUtil;
 
 import java.beans.IntrospectionException;
@@ -26,33 +26,39 @@ public class PropertyFilter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PropertyFilter.class);
     private static final ReadWriteLock lock = new ReentrantReadWriteLock();
-    private static final List<Class> IGNORED_CLASSES = new ArrayList<>(Arrays.asList(String.class, Integer.class, Double.class, Float.class, BigDecimal.class, Boolean.class, Byte.class, Date.class)); // Not efficient, but a lazy way to do it in one line
+    private final List<Class> ignoredClasses;
 
-    private static final Map<String, Map<String, Access>> groups = new HashMap<>();
-    private static final Map<String, String> userToGroup = new HashMap<>();
+    private final Map<String, Map<String, Access>> groups;
+    private final Map<String, String> userToGroup;
+
+    public PropertyFilter() {
+        this.ignoredClasses = new ArrayList<>(Arrays.asList(String.class, Integer.class, Double.class, Float.class, BigDecimal.class, Boolean.class, Byte.class, Date.class)); // Not efficient, but a lazy way to do it in one line
+        this.groups = new HashMap<>();
+        this.userToGroup = new HashMap<>();
+    }
 
     public boolean collectionClassesContains(Class clazz){
-        return IGNORED_CLASSES.contains(clazz);
+        return ignoredClasses.contains(clazz);
     }
 
     public void addCollectionClass(Class clazz){
-        if(!IGNORED_CLASSES.contains(clazz)) {
-            IGNORED_CLASSES.add(clazz);
+        if(!ignoredClasses.contains(clazz)) {
+            ignoredClasses.add(clazz);
         }
     }
 
     public boolean removeCollectionClass(Class clazz){
-        return IGNORED_CLASSES.remove(clazz);
+        return ignoredClasses.remove(clazz);
     }
 
     /**
      * Refreshes the groups listing
      */
-    public void load(List<SecurityGroup> securityGroups) {
+    public void setGroups(List<Group> groupList) {
         lock.writeLock().lock();
         groups.clear();
         userToGroup.clear();
-        for (SecurityGroup g : FilterUtil.checkNull(securityGroups)) {
+        for (Group g : FilterUtil.checkNull(groupList)) {
             Map<String, Access> accessMap = new HashMap<>();
             for (Access a : FilterUtil.checkNull(g.getAccess())) {
                 accessMap.put(a.getObjectClass(), a);
@@ -69,6 +75,10 @@ public class PropertyFilter {
         return groups.get(key);
     }
 
+    public void addUserToGroup(String username, String group){
+        userToGroup.put(username.toUpperCase(), group);
+    }
+
     public String getUsersGroup(String username){
         lock.readLock().lock();
         String groupName = userToGroup.get(username.toUpperCase());
@@ -77,8 +87,12 @@ public class PropertyFilter {
     }
 
     public List<String> getAccessibleClasses(String username){
+        return getAccessibleClassesForGroup(getUsersGroup(username));
+    }
+
+    public List<String> getAccessibleClassesForGroup(String group){
         lock.readLock().lock();
-        Map<String, Access> accessMap = getGroup(getUsersGroup(username));
+        Map<String, Access> accessMap = getGroup(group);
         if(accessMap == null) return null;
         List<String> result = new ArrayList<>();
         for(Map.Entry<String, Access> e : accessMap.entrySet()){
@@ -99,9 +113,20 @@ public class PropertyFilter {
     }
 
     public List<Permission> getAccessibleFields(String className, String username){
+        return getAccessibleFieldsForGroup(className, getUsersGroup(username));
+    }
+
+    public List<Permission> getAccessibleFieldsForGroup(Object target, String group){
+        return getAccessibleFieldsForGroup(target.getClass().getName(), group);
+    }
+
+    public List<Permission> getAccessibleFieldsForGroup(Class clazz, String group){
+        return getAccessibleFieldsForGroup(clazz.getName(), group);
+    }
+
+    public List<Permission> getAccessibleFieldsForGroup(String className, String group){
         lock.readLock().lock();
-        String userGroup = getUsersGroup(username);
-        Map<String, Access> accessMap = getGroup(userGroup);
+        Map<String, Access> accessMap = getGroup(group);
         if(accessMap == null) return null;
         Access access = accessMap.get(className);
         if(access == null) return null;
@@ -115,15 +140,15 @@ public class PropertyFilter {
         return results;
     }
 
-    public Access getAccessFromObject(Object target, String username){
-        return getAccessFromClassName(target.getClass().getName(), username);
+    public Access getAccess(Object target, String username){
+        return getAccess(target.getClass().getName(), username);
     }
 
-    public Access getAccessFromClass(Class clazz, String username){
-        return getAccessFromClassName(clazz.getName(), username);
+    public Access getAccess(Class clazz, String username){
+        return getAccess(clazz.getName(), username);
     }
 
-    public Access getAccessFromClassName(String className, String username){
+    public Access getAccess(String className, String username){
         String userGroup = getUsersGroup(username);
         if(userGroup == null) return null;
         Map<String, Access> accessMap = groups.get(userGroup);
@@ -185,7 +210,7 @@ public class PropertyFilter {
         Collection result = (Collection) FilterUtil.instantiateObject(collection.getClass());
         if(result == null) return null;
         for(Object o : collection){
-            if(IGNORED_CLASSES.contains(o.getClass())){
+            if(ignoredClasses.contains(o.getClass())){
                 result.add(o);
             }
             else {
@@ -259,7 +284,7 @@ public class PropertyFilter {
         }
         for(Object newVal : newCollection){
             // For everything in the new collection, check it isn't in the primitive type
-            if(IGNORED_CLASSES.contains(newVal.getClass()) && !exitingCollection.contains(newVal)){ // If it's a type that wont have an access type set for it, i.e. a "primitive" type where you just want the value as is
+            if(ignoredClasses.contains(newVal.getClass()) && !exitingCollection.contains(newVal)){ // If it's a type that wont have an access type set for it, i.e. a "primitive" type where you just want the value as is
                 exitingCollection.add(newVal);
             }
             else {

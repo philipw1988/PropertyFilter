@@ -6,7 +6,7 @@ import org.junit.Test;
 import uk.co.agware.filter.PropertyFilter;
 import uk.co.agware.filter.objects.Access;
 import uk.co.agware.filter.objects.Permission;
-import uk.co.agware.filter.objects.SecurityGroup;
+import uk.co.agware.filter.objects.Group;
 import uk.co.agware.filter.test.classes.SecondTestClass;
 import uk.co.agware.filter.test.classes.TestClass;
 import uk.co.agware.filter.util.FilterUtil;
@@ -98,11 +98,11 @@ public class TestPropertyFilterSave {
         FilterUtil.setDefaultAccessType(Access.Type.NO_ACCESS);
         FilterUtil.setDefaultPermissionType(Permission.Type.NO_ACCESS);
         List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
-        SecurityGroup group = new SecurityGroup();
+        Group group = new Group();
         group.setName(groupName);
         group.setAccess(accessList);
         group.setMembers(Collections.singletonList(username));
-        propertyFilter.load(Collections.singletonList(group));
+        propertyFilter.setGroups(Collections.singletonList(group));
 
         Exception ex = null;
         try {
@@ -119,11 +119,11 @@ public class TestPropertyFilterSave {
         FilterUtil.setDefaultAccessType(Access.Type.READ);
         FilterUtil.setDefaultPermissionType(Permission.Type.NO_ACCESS);
         List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
-        SecurityGroup group = new SecurityGroup();
+        Group group = new Group();
         group.setName(groupName);
         group.setAccess(accessList);
         group.setMembers(Collections.singletonList(username));
-        propertyFilter.load(Collections.singletonList(group));
+        propertyFilter.setGroups(Collections.singletonList(group));
 
         Exception ex = null;
         try {
@@ -140,11 +140,11 @@ public class TestPropertyFilterSave {
         FilterUtil.setDefaultAccessType(Access.Type.UPDATE);
         FilterUtil.setDefaultPermissionType(Permission.Type.NO_ACCESS);
         List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
-        SecurityGroup group = new SecurityGroup();
+        Group group = new Group();
         group.setName(groupName);
         group.setAccess(accessList);
         group.setMembers(Collections.singletonList(username));
-        propertyFilter.load(Collections.singletonList(group));
+        propertyFilter.setGroups(Collections.singletonList(group));
 
         Exception ex = null;
         try {
@@ -153,8 +153,8 @@ public class TestPropertyFilterSave {
             ex = e;
         }
         Assert.assertNull(ex);
-        Assert.assertEquals(testClass2.getTestBD(), testBD2);
-        Assert.assertEquals(testClass2.getStringList().size(), 3);
+        Assert.assertEquals(testBD2, testClass2.getTestBD());
+        Assert.assertEquals(3, testClass2.getStringList().size());
         Assert.assertTrue(testClass2.getStringList().contains(listString21));
         Assert.assertTrue(testClass2.getStringList().contains(listString22));
         Assert.assertTrue(testClass2.getStringList().contains(listString23));
@@ -166,11 +166,11 @@ public class TestPropertyFilterSave {
         FilterUtil.setDefaultAccessType(Access.Type.CREATE);
         FilterUtil.setDefaultPermissionType(Permission.Type.NO_ACCESS);
         List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
-        SecurityGroup group = new SecurityGroup();
+        Group group = new Group();
         group.setName(groupName);
         group.setAccess(accessList);
         group.setMembers(Collections.singletonList(username));
-        propertyFilter.load(Collections.singletonList(group));
+        propertyFilter.setGroups(Collections.singletonList(group));
 
         Exception ex = null;
         try {
@@ -179,8 +179,8 @@ public class TestPropertyFilterSave {
             ex = e;
         }
         Assert.assertNull(ex);
-        Assert.assertEquals(testClass2.getTestBD(), testBD2);
-        Assert.assertEquals(testClass2.getStringList().size(), 3);
+        Assert.assertEquals(testBD2, testClass2.getTestBD());
+        Assert.assertEquals(3, testClass2.getStringList().size());
         Assert.assertTrue(testClass2.getStringList().contains(listString21));
         Assert.assertTrue(testClass2.getStringList().contains(listString22));
         Assert.assertTrue(testClass2.getStringList().contains(listString23));
@@ -192,11 +192,11 @@ public class TestPropertyFilterSave {
         FilterUtil.setDefaultAccessType(Access.Type.UPDATE);
         FilterUtil.setDefaultPermissionType(Permission.Type.WRITE);
         List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
-        SecurityGroup group = new SecurityGroup();
+        Group group = new Group();
         group.setName(groupName);
         group.setAccess(accessList);
         group.setMembers(Collections.singletonList(username));
-        propertyFilter.load(Collections.singletonList(group));
+        propertyFilter.setGroups(Collections.singletonList(group));
 
         Exception ex = null;
         try {
@@ -205,9 +205,9 @@ public class TestPropertyFilterSave {
             ex = e;
         }
         Assert.assertNull(ex);
-        Assert.assertEquals(testClass2.getTestString(), testString2);
-        Assert.assertEquals(testClass2.getTestBD(), testBD1);
-        Assert.assertEquals(testClass2.getStringList().size(), 3);
+        Assert.assertEquals(testString2, testClass2.getTestString());
+        Assert.assertEquals(testBD1, testClass2.getTestBD());
+        Assert.assertEquals(3, testClass2.getStringList().size());
         Assert.assertTrue(testClass2.getStringList().contains(listString1));
         Assert.assertTrue(testClass2.getStringList().contains(listString2));
         Assert.assertTrue(testClass2.getStringList().contains(listString3));
@@ -222,11 +222,11 @@ public class TestPropertyFilterSave {
         FilterUtil.setDefaultAccessType(Access.Type.CREATE);
         FilterUtil.setDefaultPermissionType(Permission.Type.WRITE);
         List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
-        SecurityGroup group = new SecurityGroup();
+        Group group = new Group();
         group.setName(groupName);
         group.setAccess(accessList);
         group.setMembers(Collections.singletonList(username));
-        propertyFilter.load(Collections.singletonList(group));
+        propertyFilter.setGroups(Collections.singletonList(group));
 
         Exception ex = null;
         try {
@@ -235,9 +235,9 @@ public class TestPropertyFilterSave {
             ex = e;
         }
         Assert.assertNull(ex);
-        Assert.assertEquals(testClass2.getTestString(), testString2);
-        Assert.assertEquals(testClass2.getTestBD(), testBD1);
-        Assert.assertEquals(testClass2.getStringList().size(), 3);
+        Assert.assertEquals(testString2,testClass2.getTestString());
+        Assert.assertEquals(testBD1, testClass2.getTestBD());
+        Assert.assertEquals(3, testClass2.getStringList().size());
         Assert.assertTrue(testClass2.getStringList().contains(listString1));
         Assert.assertTrue(testClass2.getStringList().contains(listString2));
         Assert.assertTrue(testClass2.getStringList().contains(listString3));

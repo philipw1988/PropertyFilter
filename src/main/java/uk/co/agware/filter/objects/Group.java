@@ -5,13 +5,13 @@ import java.util.List;
 /**
  * Created by Philip Ward <Philip.Ward@agware.com> on 17/09/2015.
  */
-public class SecurityGroup implements Comparable<SecurityGroup> {
+public class Group implements Comparable<Group> {
 
     private String name;
     private List<String> members;
     private List<Access> access;
 
-    public SecurityGroup() {
+    public Group() {
     }
 
     public String getName() {
@@ -41,8 +41,8 @@ public class SecurityGroup implements Comparable<SecurityGroup> {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof SecurityGroup)) return false;
-        SecurityGroup that = (SecurityGroup) o;
+        if (!(o instanceof Group)) return false;
+        Group that = (Group) o;
         return name != null ? name.equals(that.name) : that.name == null;
     }
 
@@ -52,7 +52,7 @@ public class SecurityGroup implements Comparable<SecurityGroup> {
     }
 
     @Override
-    public int compareTo(SecurityGroup o) {
+    public int compareTo(Group o) {
         if(this.name == null) return -1;
         if(o.name == null) return 1;
         return this.name.compareTo(o.name);
