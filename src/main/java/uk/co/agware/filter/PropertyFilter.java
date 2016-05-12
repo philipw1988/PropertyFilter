@@ -93,11 +93,12 @@ public class PropertyFilter {
     public List<String> getAccessibleClassesForGroup(String group){
         lock.readLock().lock();
         Map<String, Access> accessMap = getGroup(group);
-        if(accessMap == null) return null;
         List<String> result = new ArrayList<>();
-        for(Map.Entry<String, Access> e : accessMap.entrySet()){
-            if(!e.getValue().getAccess().equals(Access.Type.NO_ACCESS)){
-                result.add(e.getKey());
+        if(accessMap != null) {
+            for (Map.Entry<String, Access> e : accessMap.entrySet()) {
+                if (!e.getValue().getAccess().equals(Access.Type.NO_ACCESS)) {
+                    result.add(e.getKey());
+                }
             }
         }
         lock.readLock().unlock();
@@ -127,13 +128,15 @@ public class PropertyFilter {
     public List<Permission> getAccessibleFieldsForGroup(String className, String group){
         lock.readLock().lock();
         Map<String, Access> accessMap = getGroup(group);
-        if(accessMap == null) return null;
-        Access access = accessMap.get(className);
-        if(access == null) return null;
         List<Permission> results = new ArrayList<>();
-        for(Permission p : FilterUtil.checkNull(access.getPermissions())){
-            if(!p.getPermission().equals(Permission.Type.NO_ACCESS)){
-                results.add(new Permission(p));
+        if(accessMap != null) {
+            Access access = accessMap.get(className);
+            if (access != null) {
+                for (Permission p : FilterUtil.checkNull(access.getPermissions())) {
+                    if (!p.getPermission().equals(Permission.Type.NO_ACCESS)) {
+                        results.add(new Permission(p));
+                    }
+                }
             }
         }
         lock.readLock().unlock();
