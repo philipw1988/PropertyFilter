@@ -20,21 +20,26 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * Created by Philip Ward <Philip.Ward@agware.com> on 9/04/2016.
  */
 //TODO Need to handle errors a bit better, probably worth creating an exception to throw for the parse methods
-//TODO I think I only half did the ReadWriteLock stuff...
 //TODO Put better commends on methods to explain what they're doing
 public class PropertyFilter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PropertyFilter.class);
-    private static final ReadWriteLock lock = new ReentrantReadWriteLock();
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final List<Class> ignoredClasses;
 
     private final Map<String, Map<String, Access>> groups;
     private final Map<String, String> userToGroup;
+    private boolean ignoreCollections;
 
     public PropertyFilter() {
         this.ignoredClasses = new ArrayList<>(Arrays.asList(String.class, Integer.class, Double.class, Float.class, BigDecimal.class, Boolean.class, Byte.class, Date.class)); // Not efficient, but a lazy way to do it in one line
         this.groups = new HashMap<>();
         this.userToGroup = new HashMap<>();
+        this.ignoreCollections = false;
+    }
+
+    public void ignoreCollections(boolean ignoreCollections) {
+        this.ignoreCollections = ignoreCollections;
     }
 
     public boolean collectionClassesContains(Class clazz){
@@ -172,18 +177,21 @@ public class PropertyFilter {
     }
 
     //TODO Handle lists
-    @SuppressWarnings("unchecked")
     public <T> T parseObjectForReturn(T object, String username){
         String userGroup = getUsersGroup(username);
         if(userGroup == null){
             LOGGER.warn("User {} has no group", username);
             return null;
         }
+        return parseObjectForReturn(object, username, userGroup);
+    }
 
+    @SuppressWarnings("unchecked")
+    public <T> T parseObjectForReturn(T object, String username, String groupName){
         Set<Field> fields = FilterUtil.getAllFields(object);
-        Map<String, Access> accessMap = getGroup(userGroup);
+        Map<String, Access> accessMap = getGroup(groupName);
         if(accessMap == null) {
-            LOGGER.error("No Access defined for object {} in group {}", object.getClass().getName(), userGroup);
+            LOGGER.error("No Access defined for object {} in group {}", object.getClass().getName(), groupName);
             return null;
         }
 
@@ -193,7 +201,7 @@ public class PropertyFilter {
             Access access = accessMap.get(object.getClass().getName());
             if(access != null && !access.getAccess().equals(Access.Type.NO_ACCESS)) {
                 for (Field f : fields) {
-                    if (FilterUtil.isFieldReadable(f.getName(), access) ) { //TODO handle collections
+                    if (FilterUtil.isFieldReadable(f.getName(), access) ) {
                         PropertyDescriptor pd = new PropertyDescriptor(f.getName(), object.getClass());
                         Object value = pd.getReadMethod().invoke(object);
                         if (!Collection.class.isAssignableFrom(f.getType())) {
@@ -232,17 +240,20 @@ public class PropertyFilter {
         return result;
     }
 
-    //TODO doesn't alert to missing permissions
-    //TODO Worry about maps
     public boolean parseObjectForSaving(Object newObject, Object existingObject, String username) throws IllegalAccessException {
         String userGroup = getUsersGroup(username);
         if(userGroup == null) {
             LOGGER.debug("User {} has no group", username);
             return false;
         }
+        return parseObjectForSaving(newObject, existingObject, username, userGroup);
+    }
 
+    //TODO doesn't alert to missing permissions
+    //TODO Worry about maps
+    public boolean parseObjectForSaving(Object newObject, Object existingObject, String username, String groupName) throws IllegalAccessException {
         Set<Field> fields = FilterUtil.getAllFields(newObject);
-        Map<String, Access> accessMap = getGroup(userGroup);
+        Map<String, Access> accessMap = getGroup(groupName);
 
         Access access = accessMap.get(newObject.getClass().getName());
         if (access != null && !access.getAccess().equals(Access.Type.NO_ACCESS) && !access.getAccess().equals(Access.Type.READ)) {
@@ -272,7 +283,7 @@ public class PropertyFilter {
             }
         }
         else {
-            LOGGER.warn("User {} attempting to parse object {}, which they do not have access to", username, newObject.getClass().getSimpleName());
+            LOGGER.warn("User attempting to parse object {}, which they do not have access to", newObject.getClass().getSimpleName());
             throw new IllegalAccessException("Trying to save an object for which the user has no access");
         }
         return true;
@@ -286,6 +297,11 @@ public class PropertyFilter {
             if(exitingCollection == null){
                 return false;
             }
+        }
+        if(ignoreCollections){ // If we're ignoring collections then we just add all the new ones to the existing ones
+            exitingCollection.clear();
+            exitingCollection.addAll(newCollection);
+            return true;
         }
         // For everything in the exiting collection, if new collection doesn't contain it, remove it
         for(Iterator<Object> itr = exitingCollection.iterator(); itr.hasNext();){
