@@ -6,6 +6,7 @@ import org.junit.Test;
 import uk.co.agware.filter.exceptions.FilterException;
 import uk.co.agware.filter.objects.Access;
 import uk.co.agware.filter.objects.Permission;
+import uk.co.agware.filter.test.classes.NoAccessClass;
 import uk.co.agware.filter.test.classes.NoDefaultConstructor;
 import uk.co.agware.filter.test.classes.TestClass;
 import uk.co.agware.filter.util.FilterUtil;
@@ -18,7 +19,7 @@ import java.util.Set;
 /**
  * Created by Philip Ward <Philip.Ward@agware.com> on 10/04/2016.
  */
-public class TestClassUtil {
+public class TestFilterUtil {
 
     private static Access readWriteAccessTest;
 
@@ -84,14 +85,14 @@ public class TestClassUtil {
     public void testGetAllClasses(){
         List<Class> classes = FilterUtil.getAllClasses("uk.co.agware.filter.test.classes");
         Assert.assertEquals(4, classes.size());
-        List<Class> nonHiddenClasses = FilterUtil.getAllNonHiddenClasses(classes);
-        Assert.assertEquals(2, nonHiddenClasses.size());
+        List<Class> nonHiddenClasses = FilterUtil.getAllAvailableClasses(classes);
+        Assert.assertEquals(3, nonHiddenClasses.size());
     }
 
     @Test
-    public void testGetAllNonHiddenObjects(){
+    public void testGetAllAvailableObjects(){
         List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
-        Assert.assertEquals(2, accessList.size());
+        Assert.assertEquals(3, accessList.size());
     }
 
     @Test
@@ -142,5 +143,29 @@ public class TestClassUtil {
         Assert.assertEquals(FilterUtil.buildDisplayName("hello"), "Hello");
         Assert.assertEquals(FilterUtil.buildDisplayName("Hello"), "Hello");
         Assert.assertEquals(FilterUtil.buildDisplayName("helloWorld"), "Hello World");
+    }
+
+    @Test
+    public void testBuildNoAccessFromClass(){
+        Access access = FilterUtil.buildBaseAccess(NoAccessClass.class);
+        Assert.assertEquals(Access.Type.NO_ACCESS, access.getAccess());
+        Assert.assertFalse(access.isModifiable());
+    }
+
+    @Test(expected = FilterException.class)
+    public void testFailWhenNoAnnotation(){
+        FilterUtil.buildBaseAccess(NoDefaultConstructor.class);
+    }
+
+    @Test
+    public void testDisplayName(){
+        Access access = FilterUtil.buildBaseAccess(TestClass.class);
+        Assert.assertEquals("Test Class", access.getDisplayName());
+    }
+
+    @Test
+    public void testDefaultDisplayName(){
+        Access access = FilterUtil.buildBaseAccess(NoAccessClass.class);
+        Assert.assertEquals(NoAccessClass.class.getName(), access.getDisplayName());
     }
 }

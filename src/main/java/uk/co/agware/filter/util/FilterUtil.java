@@ -105,13 +105,13 @@ public class FilterUtil {
         }
     }
 
-    public static List<Class> getAllNonHiddenClasses(List<Class> classes){
+    public static List<Class> getAllAvailableClasses(List<Class> classes){
         return classes.stream().filter(c -> !Modifier.isAbstract(c.getModifiers()) && c.isAnnotationPresent(FilterTarget.class)).collect(Collectors.toList());
     }
 
     /* Returns a complete list of all non-hidden objects and fields for all classes */
     public static List<Access> getFullAccessList(String path){
-        List<Class> classes = getAllNonHiddenClasses(getAllClasses(path));
+        List<Class> classes = getAllAvailableClasses(getAllClasses(path));
         List<Access> objects = new ArrayList<>();
         for(Class c : classes){
             Access access = createDefaultAccessFromClass(c);
@@ -125,10 +125,17 @@ public class FilterUtil {
         Access access = buildBaseAccess(c);
         List<Permission> permissions = new ArrayList<>();
         for(Field f : getAllFields(c)){
-            if(f.isAnnotationPresent(NoAccess.class)) continue;
             Permission permission = new Permission();
-            if(f.isAnnotationPresent(ReadOnly.class)){
+            if(f.isAnnotationPresent(NoAccess.class)){
+                permission.setPermission(Permission.Type.NO_ACCESS);
+                permission.setModifiable(false);
+            }
+            else if(f.isAnnotationPresent(ReadOnly.class)){
                 permission.setPermission(Permission.Type.READ);
+                permission.setModifiable(false);
+            }
+            else if(f.isAnnotationPresent(Write.class)){
+                permission.setPermission(Permission.Type.WRITE);
                 permission.setModifiable(false);
             }
             else {
@@ -162,6 +169,10 @@ public class FilterUtil {
         }
         else if(c.isAnnotationPresent(Create.class)) {
             access.setAccess(Access.Type.CREATE);
+            access.setModifiable(false);
+        }
+        else if(c.isAnnotationPresent(NoAccess.class)) {
+            access.setAccess(Access.Type.NO_ACCESS);
             access.setModifiable(false);
         }
         else {

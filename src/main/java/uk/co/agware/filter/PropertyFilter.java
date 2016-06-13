@@ -41,7 +41,7 @@ public class PropertyFilter {
     private boolean filterCollectionOnLoad;
 
     public PropertyFilter() {
-        this.ignoredClasses = new ArrayList<>(Arrays.asList(String.class, Integer.class, int.class, Double.class, double.class, Float.class, float.class, BigDecimal.class, Boolean.class, boolean.class, Byte.class, byte.class, Date.class, LocalDate.class, LocalDateTime.class, BigInteger.class)); // Not efficient, but a lazy way to do it in one line
+        this.ignoredClasses = new ArrayList<>(Arrays.asList(String.class, Integer.class, int.class, Double.class, double.class, Float.class, float.class, BigDecimal.class, Boolean.class, boolean.class, Byte.class, byte.class, Date.class, LocalDate.class, LocalDateTime.class, BigInteger.class, Long.class, long.class)); // Not efficient, but a lazy way to do it in one line
         this.groups = new HashMap<>();
         this.userToGroup = new HashMap<>();
         this.filterCollectionsOnSave = true;
@@ -169,6 +169,9 @@ public class PropertyFilter {
         List<Permission> results = new ArrayList<>();
         if(accessMap != null) {
             Access access = accessMap.get(className);
+            if(access == null){
+                access = accessMap.get(displayToClassNames.get(className));
+            }
             if (access != null) {
                 for (Permission p : FilterUtil.checkNull(access.getPermissions())) {
                     if (!p.getPermission().equals(Permission.Type.NO_ACCESS)) {
@@ -181,32 +184,38 @@ public class PropertyFilter {
         return results;
     }
 
-    public Access getAccess(Object target, String username){
+    public Access getAccess(Object target, String username) throws PropertyFilterException {
         return getAccess(target.getClass().getName(), username);
     }
 
-    public Access getAccess(Class clazz, String username){
+    public Access getAccess(Class clazz, String username) throws PropertyFilterException {
         return getAccess(clazz.getName(), username);
     }
 
-    public Access getAccess(String className, String username){
+    public Access getAccess(String className, String username) throws PropertyFilterException {
         String userGroup = getUsersGroup(username);
         if(userGroup == null) return null;
         return getAccessForGroup(className, userGroup);
     }
 
-    public Access getAccessForGroup(Object target, String groupName){
+    public Access getAccessForGroup(Object target, String groupName) throws PropertyFilterException {
         return getAccessForGroup(target.getClass().getName(), groupName);
     }
 
-    public Access getAccessForGroup(Class clazz, String groupName){
+    public Access getAccessForGroup(Class clazz, String groupName) throws PropertyFilterException {
         return getAccessForGroup(clazz.getName(), groupName);
     }
 
-    public Access getAccessForGroup(String className, String groupName){
+    public Access getAccessForGroup(String className, String groupName) throws PropertyFilterException {
+        lock.readLock().lock();
         Map<String, Access> accessMap = groups.get(groupName);
-        if(accessMap == null) return null;
-        return accessMap.get(className);
+        if(accessMap == null) throw new PropertyFilterException(String.format("Group %s does not exist", groupName));
+        Access access = accessMap.get(className);
+        if(access == null) {
+            access = accessMap.get(displayToClassNames.get(className));
+        }
+        lock.readLock().unlock();
+        return access;
     }
 
     public <T> T parseObjectForReturn(T object, String username) throws PropertyFilterException {
