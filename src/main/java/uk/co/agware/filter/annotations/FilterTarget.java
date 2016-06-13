@@ -6,9 +6,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Created by Philip Ward <Philip.Ward@agware.com> on 9/04/2016.
+ * Created by Philip Ward <Philip.Ward@agware.com> on 9/06/2016.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD, ElementType.TYPE})
-public @interface Hidden {
+@Target({ElementType.TYPE})
+public @interface FilterTarget {
+
+    String value() default "";
 }

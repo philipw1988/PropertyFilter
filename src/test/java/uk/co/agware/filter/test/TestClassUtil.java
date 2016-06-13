@@ -3,6 +3,7 @@ package uk.co.agware.filter.test;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import uk.co.agware.filter.exceptions.FilterException;
 import uk.co.agware.filter.objects.Access;
 import uk.co.agware.filter.objects.Permission;
 import uk.co.agware.filter.test.classes.NoDefaultConstructor;
@@ -46,6 +47,10 @@ public class TestClassUtil {
     @Test
     public void testInstantiateObject(){
         Assert.assertNotNull(FilterUtil.instantiateObject(TestClass.class));
+    }
+
+    @Test(expected = FilterException.class)
+    public void testInstantiateFails(){
         Assert.assertNull(FilterUtil.instantiateObject(NoDefaultConstructor.class));
     }
 
@@ -78,19 +83,20 @@ public class TestClassUtil {
     @Test
     public void testGetAllClasses(){
         List<Class> classes = FilterUtil.getAllClasses("uk.co.agware.filter.test.classes");
-        Assert.assertTrue(classes.size() == 3);
+        Assert.assertEquals(4, classes.size());
         List<Class> nonHiddenClasses = FilterUtil.getAllNonHiddenClasses(classes);
-        Assert.assertTrue(nonHiddenClasses.size() == 2);
+        Assert.assertEquals(2, nonHiddenClasses.size());
     }
 
     @Test
     public void testGetAllNonHiddenObjects(){
         List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
-        Assert.assertTrue(accessList.size() == 2);
+        Assert.assertEquals(2, accessList.size());
     }
 
     @Test
     public void testGetDefaultAccessForClass(){
+        FilterUtil.setDefaultAccessType(Access.Type.NO_ACCESS);
         Access access = FilterUtil.createDefaultAccessFromClass(TestClass.class);
         Assert.assertEquals(access.getAccess(), Access.Type.NO_ACCESS);
 
@@ -100,7 +106,7 @@ public class TestClassUtil {
 
         Assert.assertEquals(access.getPermissions().size(), 4);
         for(Permission p : access.getPermissions()){
-            if (p.getPropertyName().equals("testString")){
+            if (p.getPropertyName().equals("id")){
                 Assert.assertEquals(p.getPermission(), Permission.Type.READ);
             }
             else {
@@ -111,7 +117,7 @@ public class TestClassUtil {
         FilterUtil.setDefaultPermissionType(Permission.Type.WRITE);
         access = FilterUtil.createDefaultAccessFromClass(TestClass.class);
         for(Permission p : access.getPermissions()){
-            if (p.getPropertyName().equals("testString")){
+            if (p.getPropertyName().equals("id")){
                 Assert.assertEquals(p.getPermission(), Permission.Type.READ);
             }
             else {

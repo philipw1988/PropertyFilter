@@ -9,8 +9,10 @@ public class Permission implements Comparable<Permission> {
     private String propertyName;
     private String displayName;
     private Type permission;
+    private boolean modifiable;
 
     public Permission() {
+        this.modifiable = false;
     }
 
     public Permission(Permission p) {
@@ -18,6 +20,7 @@ public class Permission implements Comparable<Permission> {
         this.propertyName = p.getPropertyName();
         this.displayName = p.getDisplayName();
         this.permission = p.getPermission();
+        this.modifiable = p.isModifiable();
     }
 
     public String getPropertyName() {
@@ -42,6 +45,14 @@ public class Permission implements Comparable<Permission> {
 
     public void setPermission(Type permission) {
         this.permission = permission;
+    }
+
+    public boolean isModifiable() {
+        return modifiable;
+    }
+
+    public void setModifiable(boolean modifiable) {
+        this.modifiable = modifiable;
     }
 
     @Override

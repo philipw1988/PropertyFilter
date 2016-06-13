@@ -6,9 +6,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Created by Philip Ward <Philip.Ward@agware.com> on 10/04/2016.
+ * Created by Philip Ward <Philip.Ward@agware.com> on 8/06/2016.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD})
-public @interface Write {
+@Target({ElementType.TYPE})
+public @interface Update {
 }

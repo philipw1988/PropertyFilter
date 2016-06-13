@@ -1,5 +1,6 @@
 package uk.co.agware.filter.test.classes;
 
+import uk.co.agware.filter.annotations.FilterTarget;
 import uk.co.agware.filter.annotations.ReadOnly;
 
 import java.math.BigDecimal;
@@ -8,10 +9,10 @@ import java.util.List;
 /**
  * Created by Philip Ward <Philip.Ward@agware.com> on 10/04/2016.
  */
+@FilterTarget("Test Class")
 public class TestClass {
 
-    @ReadOnly
-    private String testString;
+    @ReadOnly private String id;
     private BigDecimal testBD;
     private List<String> stringList;
     private List<SecondTestClass> secondTestClasses;
@@ -19,19 +20,19 @@ public class TestClass {
     public TestClass() {
     }
 
-    public TestClass(String testString, BigDecimal testBD, List<String> stringList, List<SecondTestClass> secondTestClasses) {
-        this.testString = testString;
+    public TestClass(String id, BigDecimal testBD, List<String> stringList, List<SecondTestClass> secondTestClasses) {
+        this.id = id;
         this.testBD = testBD;
         this.stringList = stringList;
         this.secondTestClasses = secondTestClasses;
     }
 
-    public String getTestString() {
-        return testString;
+    public String getId() {
+        return id;
     }
 
-    public void setTestString(String testString) {
-        this.testString = testString;
+    public void setId(String id) {
+        this.id = id;
     }
 
     public BigDecimal getTestBD() {
@@ -63,11 +64,11 @@ public class TestClass {
         if (this == o) return true;
         if (!(o instanceof TestClass)) return false;
         TestClass testClass = (TestClass) o;
-        return testString != null ? testString.equals(testClass.testString) : testClass.testString == null;
+        return id != null ? id.equals(testClass.id) : testClass.id == null;
     }
 
     @Override
     public int hashCode() {
-        return testString != null ? testString.hashCode() : 0;
+        return id != null ? id.hashCode() : 0;
     }
 }

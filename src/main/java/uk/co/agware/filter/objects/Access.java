@@ -12,18 +12,23 @@ import java.util.stream.Collectors;
 public class Access implements Comparable<Access> {
 
     public enum Type {NO_ACCESS, READ, CREATE, UPDATE}
-    String objectClass;
+    private String objectClass;
+    private String displayName;
     private Type access;
+    private boolean modifiable;
     private List<Permission> permissions;
 
     public Access() {
+        modifiable = false;
     }
 
     public Access(Access access){
         if(access == null) throw new IllegalArgumentException("Trying to create a copy of a null Access");
         this.objectClass = access.getObjectClass();
+        this.displayName = access.getDisplayName();
         this.access = access.getAccess();
         this.permissions = new ArrayList<>(FilterUtil.checkNull(access.getPermissions()).size());
+        this.modifiable = access.isModifiable();
         permissions.addAll(FilterUtil.checkNull(access.getPermissions()).stream().map(Permission::new).collect(Collectors.toList()));
     }
 
@@ -33,6 +38,14 @@ public class Access implements Comparable<Access> {
 
     public void setObjectClass(String objectClass) {
         this.objectClass = objectClass;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
     }
 
     public Type getAccess() {
@@ -49,6 +62,14 @@ public class Access implements Comparable<Access> {
 
     public void setPermissions(List<Permission> permissions) {
         this.permissions = permissions;
+    }
+
+    public boolean isModifiable() {
+        return modifiable;
+    }
+
+    public void setModifiable(boolean modifiable) {
+        this.modifiable = modifiable;
     }
 
     @Override

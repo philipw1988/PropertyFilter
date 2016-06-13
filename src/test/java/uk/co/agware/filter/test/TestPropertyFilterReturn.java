@@ -4,9 +4,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import uk.co.agware.filter.PropertyFilter;
+import uk.co.agware.filter.exceptions.PropertyFilterException;
 import uk.co.agware.filter.objects.Access;
-import uk.co.agware.filter.objects.Permission;
 import uk.co.agware.filter.objects.Group;
+import uk.co.agware.filter.objects.Permission;
 import uk.co.agware.filter.test.classes.SecondTestClass;
 import uk.co.agware.filter.test.classes.TestClass;
 import uk.co.agware.filter.util.FilterUtil;
@@ -55,14 +56,14 @@ public class TestPropertyFilterReturn {
         secondTestClasses.add(secondTestClass3);
 
         testClass = new TestClass();
-        testClass.setTestString(testString1);
+        testClass.setId(testString1);
         testClass.setTestBD(testBD1);
         testClass.setSecondTestClasses(secondTestClasses);
         testClass.setStringList(new ArrayList<>(Arrays.asList(listString1, listString2, listString3)));
     }
 
     @Test
-    public void testReturnNoAccess(){
+    public void testReturnNoAccess() throws PropertyFilterException {
         propertyFilter = new PropertyFilter();
         FilterUtil.setDefaultAccessType(Access.Type.NO_ACCESS);
         FilterUtil.setDefaultPermissionType(Permission.Type.NO_ACCESS);
@@ -78,7 +79,7 @@ public class TestPropertyFilterReturn {
     }
 
     @Test
-    public void testReturnNoAccessWritePermission(){
+    public void testReturnNoAccessWritePermission() throws PropertyFilterException {
         propertyFilter = new PropertyFilter();
         FilterUtil.setDefaultAccessType(Access.Type.NO_ACCESS);
         FilterUtil.setDefaultPermissionType(Permission.Type.WRITE);
@@ -94,7 +95,7 @@ public class TestPropertyFilterReturn {
     }
 
     @Test
-    public void testReturnReadAccessNoPermission(){
+    public void testReturnReadAccessNoPermission() throws PropertyFilterException {
         propertyFilter = new PropertyFilter();
         FilterUtil.setDefaultAccessType(Access.Type.READ);
         FilterUtil.setDefaultPermissionType(Permission.Type.NO_ACCESS);
@@ -113,7 +114,7 @@ public class TestPropertyFilterReturn {
     }
 
     @Test
-    public void testReturnReadAccessReadPermission(){
+    public void testReturnReadAccessReadPermission() throws PropertyFilterException {
         propertyFilter = new PropertyFilter();
         FilterUtil.setDefaultAccessType(Access.Type.READ);
         FilterUtil.setDefaultPermissionType(Permission.Type.READ);
@@ -133,5 +134,35 @@ public class TestPropertyFilterReturn {
         for(SecondTestClass s : t.getSecondTestClasses()){
             Assert.assertTrue(t.getSecondTestClasses().contains(s));
         }
+    }
+
+    @Test(expected = PropertyFilterException.class)
+    public void testUserHasNoGroup() throws PropertyFilterException {
+        propertyFilter = new PropertyFilter();
+        FilterUtil.setDefaultAccessType(Access.Type.READ);
+        FilterUtil.setDefaultPermissionType(Permission.Type.READ);
+        List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        Group group = new Group();
+        group.setName(groupName);
+        group.setAccess(accessList);
+        group.setMembers(Collections.singletonList(username));
+        propertyFilter.setGroups(Collections.singletonList(group));
+
+        propertyFilter.parseObjectForReturn(new TestClass(), "A user without a group");
+    }
+
+    @Test(expected = PropertyFilterException.class)
+    public void testUnknownGroupName() throws PropertyFilterException {
+        propertyFilter = new PropertyFilter();
+        FilterUtil.setDefaultAccessType(Access.Type.READ);
+        FilterUtil.setDefaultPermissionType(Permission.Type.READ);
+        List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        Group group = new Group();
+        group.setName(groupName);
+        group.setAccess(accessList);
+        group.setMembers(Collections.singletonList(username));
+        propertyFilter.setGroups(Collections.singletonList(group));
+
+        propertyFilter.parseObjectForReturn(new TestClass(), username, "Silly Group Name");
     }
 }

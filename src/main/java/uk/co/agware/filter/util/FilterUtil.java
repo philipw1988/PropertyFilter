@@ -4,8 +4,8 @@ import com.google.common.reflect.ClassPath;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.co.agware.filter.annotations.Hidden;
-import uk.co.agware.filter.annotations.ReadOnly;
+import uk.co.agware.filter.annotations.*;
+import uk.co.agware.filter.exceptions.FilterException;
 import uk.co.agware.filter.objects.Access;
 import uk.co.agware.filter.objects.Permission;
 
@@ -26,6 +26,9 @@ public class FilterUtil {
     private static Access.Type DEFAULT_ACCESS_TYPE = Access.Type.NO_ACCESS;
     private static Permission.Type DEFAULT_PERMISSION_TYPE = Permission.Type.NO_ACCESS;
 
+    // Don't make an instance of this class!
+    private FilterUtil(){}
+
     public static void setDefaultAccessType(Access.Type type){
         DEFAULT_ACCESS_TYPE = type;
     }
@@ -34,7 +37,7 @@ public class FilterUtil {
         DEFAULT_PERMISSION_TYPE = defaultPermissionType;
     }
 
-    public static Object instantiateObject(Class clazz){
+    public static Object instantiateObject(Class clazz) {
         Constructor[] constructors = clazz.getDeclaredConstructors();
         for(Constructor c : constructors){
             if(c.getGenericParameterTypes().length == 0){
@@ -42,16 +45,15 @@ public class FilterUtil {
                     return c.newInstance();
                 } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
                     LOGGER.error(e.getMessage(), e);
-                    return null;
+                    throw new FilterException("Error instantiating new object of class " +clazz, e);
                 }
             }
         }
         LOGGER.error("No Default Constructor found for class {}", clazz);
-        return null;
+        throw new FilterException("No Default Constructor found for class " +clazz);
     }
 
-
-    // Returns and empty list of the list passed in is null
+    // Returns and empty list if the collection passed in is null
     public static <T> Collection<T> checkNull(Collection<T> collection){
         return collection == null ? Collections.emptyList() : collection;
     }
@@ -99,18 +101,12 @@ public class FilterUtil {
             return classes;
         } catch (IOException e) {
             LOGGER.error(e.getMessage(), e);
-            return Collections.EMPTY_LIST;
+            throw new FilterException("An issue occurred while trying to read objects on the ClassPath " +path);
         }
     }
 
     public static List<Class> getAllNonHiddenClasses(List<Class> classes){
-        List<Class> result = new ArrayList<>();
-        for(Class c : classes){
-            if( !(Modifier.isAbstract(c.getModifiers()) || c.isAnnotationPresent(Hidden.class)) ){
-                result.add(c);
-            }
-        }
-        return result;
+        return classes.stream().filter(c -> !Modifier.isAbstract(c.getModifiers()) && c.isAnnotationPresent(FilterTarget.class)).collect(Collectors.toList());
     }
 
     /* Returns a complete list of all non-hidden objects and fields for all classes */
@@ -126,26 +122,52 @@ public class FilterUtil {
     }
 
     public static Access createDefaultAccessFromClass(Class c){
-        Access access = new Access();
-        access.setObjectClass(c.getName());
-        access.setAccess(DEFAULT_ACCESS_TYPE);
+        Access access = buildBaseAccess(c);
         List<Permission> permissions = new ArrayList<>();
         for(Field f : getAllFields(c)){
-            if(!f.isAnnotationPresent(Hidden.class)){
-                Permission permission = new Permission();
-                if(f.isAnnotationPresent(ReadOnly.class)){
-                    permission.setPermission(Permission.Type.READ);
-                }
-                else {
-                    permission.setPermission(DEFAULT_PERMISSION_TYPE);
-                }
-                permission.setPropertyName(f.getName());
-                permission.setDisplayName(buildDisplayName(f.getName()));
-                permissions.add(permission);
+            if(f.isAnnotationPresent(NoAccess.class)) continue;
+            Permission permission = new Permission();
+            if(f.isAnnotationPresent(ReadOnly.class)){
+                permission.setPermission(Permission.Type.READ);
+                permission.setModifiable(false);
             }
+            else {
+                permission.setPermission(DEFAULT_PERMISSION_TYPE);
+            }
+            permission.setPropertyName(f.getName());
+            permission.setDisplayName(buildDisplayName(f.getName()));
+            permission.setModifiable(true);
+            permissions.add(permission);
         }
         Collections.sort(permissions);
         access.setPermissions(permissions);
+        return access;
+    }
+
+    public static Access buildBaseAccess(Class c){
+        Access access = new Access();
+        access.setObjectClass(c.getName());
+
+        FilterTarget ft = (FilterTarget) c.getAnnotation(FilterTarget.class);
+        if(ft == null) throw new FilterException(String.format("Class %s appeared without a FilterTarget Annotation present", c.getName()));
+        access.setDisplayName("".equals(ft.value()) ? c.getName() : ft.value());
+
+        if(c.isAnnotationPresent(ReadOnly.class)) {
+            access.setAccess(Access.Type.READ);
+            access.setModifiable(false);
+        }
+        else if(c.isAnnotationPresent(Update.class)) {
+            access.setAccess(Access.Type.UPDATE);
+            access.setModifiable(false);
+        }
+        else if(c.isAnnotationPresent(Create.class)) {
+            access.setAccess(Access.Type.CREATE);
+            access.setModifiable(false);
+        }
+        else {
+            access.setAccess(DEFAULT_ACCESS_TYPE);
+            access.setModifiable(true);
+        }
         return access;
     }
 
@@ -156,17 +178,16 @@ public class FilterUtil {
     }
 
     public static String buildDisplayName(String input){
-        if(input == null) return null;
+        if(input == null) return "";
         String name = capitalizeFirst(input);
         String[] words = StringUtils.splitByCharacterTypeCamelCase(capitalizeFirst(name));
-        if(words != null && words.length > 0) {
-            StringBuilder s = new StringBuilder(words[0]);
-            for (int i = 1; i < words.length; i++) {
-                s.append(" ");
-                s.append(words[i]);
-            }
-            return s.toString();
+        if(words == null || words.length == 0) return "";
+
+        StringBuilder s = new StringBuilder(words[0]);
+        for (int i = 1; i < words.length; i++) {
+            s.append(" ");
+            s.append(words[i]);
         }
-        return "";
+        return s.toString();
     }
 }

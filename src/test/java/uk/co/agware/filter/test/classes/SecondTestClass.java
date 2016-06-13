@@ -1,30 +1,32 @@
 package uk.co.agware.filter.test.classes;
 
+import uk.co.agware.filter.annotations.FilterTarget;
 import uk.co.agware.filter.annotations.ReadOnly;
 
 /**
  * Created by Philip Ward <Philip.Ward@agware.com> on 10/04/2016.
  */
+@FilterTarget("Second Test Class")
 public class SecondTestClass {
 
     @ReadOnly
-    private String name;
+    private String id;
     private Integer number;
 
     public SecondTestClass() {
     }
 
-    public SecondTestClass(String name, Integer number) {
-        this.name = name;
+    public SecondTestClass(String id, Integer number) {
+        this.id = id;
         this.number = number;
     }
 
-    public String getName() {
-        return name;
+    public String getId() {
+        return id;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setId(String id) {
+        this.id = id;
     }
 
     public Integer getNumber() {
@@ -40,11 +42,11 @@ public class SecondTestClass {
         if (this == o) return true;
         if (!(o instanceof SecondTestClass)) return false;
         SecondTestClass that = (SecondTestClass) o;
-        return name != null ? name.equals(that.name) : that.name == null;
+        return id != null ? id.equals(that.id) : that.id == null;
     }
 
     @Override
     public int hashCode() {
-        return name != null ? name.hashCode() : 0;
+        return id != null ? id.hashCode() : 0;
     }
 }
