@@ -22,14 +22,20 @@ public class Access implements Comparable<Access> {
         modifiable = false;
     }
 
+    public Access(String objectClass, Type access, boolean modifiable) {
+        this.objectClass = objectClass;
+        this.access = access;
+        this.modifiable = modifiable;
+    }
+
     public Access(Access access){
         if(access == null) throw new IllegalArgumentException("Trying to create a copy of a null Access");
         this.objectClass = access.getObjectClass();
         this.displayName = access.getDisplayName();
         this.access = access.getAccess();
-        this.permissions = new ArrayList<>(FilterUtil.checkNull(access.getPermissions()).size());
+        this.permissions = new ArrayList<>(FilterUtil.nullSafe(access.getPermissions()).size());
         this.modifiable = access.isModifiable();
-        permissions.addAll(FilterUtil.checkNull(access.getPermissions()).stream().map(Permission::new).collect(Collectors.toList()));
+        permissions.addAll(FilterUtil.nullSafe(access.getPermissions()).stream().map(Permission::new).collect(Collectors.toList()));
     }
 
     public String getObjectClass() {
@@ -76,19 +82,20 @@ public class Access implements Comparable<Access> {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Access)) return false;
-        if (!super.equals(o)) return false;
 
-        Access access = (Access) o;
+        Access access1 = (Access) o;
 
-        if (objectClass != null ? !objectClass.equals(access.objectClass) : access.objectClass != null) return false;
+        if (modifiable != access1.modifiable) return false;
+        if (objectClass != null ? !objectClass.equals(access1.objectClass) : access1.objectClass != null) return false;
+        return access == access1.access;
 
-        return true;
     }
 
     @Override
     public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + (objectClass != null ? objectClass.hashCode() : 0);
+        int result = objectClass != null ? objectClass.hashCode() : 0;
+        result = 31 * result + (access != null ? access.hashCode() : 0);
+        result = 31 * result + (modifiable ? 1 : 0);
         return result;
     }
 

@@ -94,15 +94,15 @@ public class PropertyFilter {
         lock.writeLock().lock();
         groups.clear();
         userToGroup.clear();
-        for (Group g : FilterUtil.checkNull(groupList)) {
+        for (Group g : FilterUtil.nullSafe(groupList)) {
             Map<String, Access> accessMap = new HashMap<>();
-            for (Access a : FilterUtil.checkNull(g.getAccess())) {
+            for (Access a : FilterUtil.nullSafe(g.getAccess())) {
                 accessMap.put(a.getObjectClass(), a);
                 String displayName = a.getDisplayName() == null || "".equals(a.getDisplayName()) ? a.getObjectClass() : a.getDisplayName();
                 displayToClassNames.put(displayName, a.getObjectClass());
             }
             groups.put(g.getName(), accessMap);
-            for (String s : FilterUtil.checkNull(g.getMembers())) {
+            for (String s : FilterUtil.nullSafe(g.getMembers())) {
                 userToGroup.put(s.toUpperCase(), g.getName());
             }
         }
@@ -173,7 +173,7 @@ public class PropertyFilter {
                 access = accessMap.get(displayToClassNames.get(className));
             }
             if (access != null) {
-                for (Permission p : FilterUtil.checkNull(access.getPermissions())) {
+                for (Permission p : FilterUtil.nullSafe(access.getPermissions())) {
                     if (!p.getPermission().equals(Permission.Type.NO_ACCESS)) {
                         results.add(new Permission(p));
                     }
@@ -240,27 +240,24 @@ public class PropertyFilter {
         try {
             Access access = accessMap.get(object.getClass().getName());
             if(access == null) throw new FilterException("Access missing for class of type " +object.getClass().getName());
-            if(!access.getAccess().equals(Access.Type.NO_ACCESS)) {
-                for (Field f : fields) {
-                    if (FilterUtil.isFieldReadable(f.getName(), access) ) {
-                        PropertyDescriptor pd = new PropertyDescriptor(f.getName(), object.getClass());
-                        Object value = pd.getReadMethod().invoke(object);
-                        if (!Collection.class.isAssignableFrom(f.getType())) {
+            if(access.getAccess().equals(Access.Type.NO_ACCESS)) return null; // If they don't have access then return null so they can't view the data at all
+
+            for (Field f : fields) {
+                if (FilterUtil.isFieldReadable(f.getName(), access) ) {
+                    PropertyDescriptor pd = new PropertyDescriptor(f.getName(), object.getClass());
+                    Object value = pd.getReadMethod().invoke(object);
+                    if (!Collection.class.isAssignableFrom(f.getType())) {
+                        pd.getWriteMethod().invoke(obj, value);
+                    }
+                    else {
+                        if(!filterCollectionOnLoad){ // Just dump the collection in
                             pd.getWriteMethod().invoke(obj, value);
                         }
-                        else {
-                            if(!filterCollectionOnLoad){ // Just dump the collection in
-                                pd.getWriteMethod().invoke(obj, value);
-                            }
-                            else if(value != null){
-                                pd.getWriteMethod().invoke(obj, handleCollectionForReturn((Collection) value, username, groupName));
-                            }
+                        else if(value != null){
+                            pd.getWriteMethod().invoke(obj, handleCollectionForReturn((Collection) value, username, groupName));
                         }
                     }
                 }
-            }
-            else {
-                return null; // We just want to null out any values the user doesn't have access to as these could be sub properties of a main class they do have access to
             }
         } catch (IntrospectionException | InvocationTargetException | IllegalAccessException e) {
             LOGGER.error(e.getMessage(), e);
@@ -307,40 +304,36 @@ public class PropertyFilter {
 
         Access access = accessMap.get(newObject.getClass().getName());
         if(access == null) throw new FilterException(String.format("No access defined for class %s and group %s", newObject.getClass().getName(), groupName));
-        if (!access.getAccess().equals(Access.Type.NO_ACCESS) && !access.getAccess().equals(Access.Type.READ)) {
-            try {
-                for (Field f : fields) {
-                    if(FilterUtil.isFieldWritable(f.getName(), access)) {
-                        PropertyDescriptor pd = new PropertyDescriptor(f.getName(), newObject.getClass());
-                        Object newValue = pd.getReadMethod().invoke(newObject);
-                        if (!Collection.class.isAssignableFrom(f.getType())) {
+        // If the user doesn't have access to change things, return the object that was there before they started
+        if (access.getAccess().equals(Access.Type.NO_ACCESS) || access.getAccess().equals(Access.Type.READ)) return existingObject;
+        try {
+            for (Field f : fields) {
+                if(FilterUtil.isFieldWritable(f.getName(), access)) {
+                    PropertyDescriptor pd = new PropertyDescriptor(f.getName(), newObject.getClass());
+                    Object newValue = pd.getReadMethod().invoke(newObject);
+                    if (!Collection.class.isAssignableFrom(f.getType())) {
+                        pd.getWriteMethod().invoke(existingObject, newValue);
+                    }
+                    else {
+                        if(newValue == null){
                             pd.getWriteMethod().invoke(existingObject, newValue);
                         }
                         else {
-                            if(newValue == null){
-                                pd.getWriteMethod().invoke(existingObject, newValue);
-                            }
-                            else {
-                                // Get the old and new collection
-                                Collection newCollection = (Collection)newValue;
-                                Collection existingCollection = (Collection) pd.getReadMethod().invoke(existingObject);
-                                // Parse the collection and get one containing all the new values
-                                Collection resultingCollection = handleCollectionsForSaving(existingCollection, newCollection, username, groupName);
-                                // Clear the current contents of the collection and add all the results of the filtering
-                                existingCollection.clear();
-                                existingCollection.addAll(resultingCollection);
-                            }
+                            // Get the old and new collection
+                            Collection newCollection = (Collection)newValue;
+                            Collection existingCollection = (Collection) pd.getReadMethod().invoke(existingObject);
+                            // Parse the collection and get one containing all the new values
+                            Collection resultingCollection = handleCollectionsForSaving(existingCollection, newCollection, username, groupName);
+                            // Clear the current contents of the collection and add all the results of the filtering
+                            existingCollection.clear();
+                            existingCollection.addAll(resultingCollection);
                         }
                     }
                 }
-            } catch (IntrospectionException | InvocationTargetException | IllegalAccessException e) {
-                LOGGER.error(e.getMessage(), e);
-                throw new FilterException(e.getMessage(), e);
             }
-        }
-        else {
-            LOGGER.warn("User attempting to parse object {}, which they do not have access to", newObject.getClass().getSimpleName());
-            throw new IllegalAccessException("Trying to save an object for which the user has no access");
+        } catch (IntrospectionException | InvocationTargetException | IllegalAccessException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new FilterException(e.getMessage(), e);
         }
         return existingObject;
     }

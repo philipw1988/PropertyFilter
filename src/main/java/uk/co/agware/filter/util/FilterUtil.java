@@ -10,9 +10,10 @@ import uk.co.agware.filter.objects.Access;
 import uk.co.agware.filter.objects.Permission;
 
 import java.io.IOException;
-import java.lang.reflect.Constructor;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -38,43 +39,41 @@ public class FilterUtil {
     }
 
     public static Object instantiateObject(Class clazz) {
-        Constructor[] constructors = clazz.getDeclaredConstructors();
-        for(Constructor c : constructors){
-            if(c.getGenericParameterTypes().length == 0){
-                try {
-                    return c.newInstance();
-                } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-                    LOGGER.error(e.getMessage(), e);
-                    throw new FilterException("Error instantiating new object of class " +clazz, e);
-                }
-            }
+        try {
+            MethodHandle methodHandle = MethodHandles.lookup().findConstructor(clazz, MethodType.methodType(void.class));
+            return methodHandle.invoke();
+        } catch (NoSuchMethodException e) {
+            throw new FilterException("Unable to find constructor for class " +clazz.getName());
+        } catch (IllegalAccessException e) {
+            throw new FilterException("Unable to access default constructor for class " +clazz.getName());
+        } catch (Throwable throwable) {
+            throw new FilterException(String.format("Class %s threw an exception during instantiation of default constructor", clazz.getName()), throwable);
         }
-        LOGGER.error("No Default Constructor found for class {}", clazz);
-        throw new FilterException("No Default Constructor found for class " +clazz);
     }
 
     // Returns and empty list if the collection passed in is null
-    public static <T> Collection<T> checkNull(Collection<T> collection){
+    public static <T> Collection<T> nullSafe(Collection<T> collection){
         return collection == null ? Collections.emptyList() : collection;
     }
 
     public static boolean isFieldReadable(String fieldName, Access access){
-        for(Permission p : checkNull(access.getPermissions())){
+        for(Permission p : nullSafe(access.getPermissions())){
             if(p.getPropertyName().equals(fieldName)){
                 return !p.getPermission().equals(Permission.Type.NO_ACCESS);
             }
         }
         LOGGER.error("No permission defined for field {} on object {}", fieldName, access.getObjectClass());
-        return false;
+        throw new FilterException(String.format("No permission defined for field %s on object %s", fieldName, access.getObjectClass()));
     }
 
     public static boolean isFieldWritable(String fieldName, Access access){
-        for(Permission p : checkNull(access.getPermissions())){
+        for(Permission p : nullSafe(access.getPermissions())){
             if(p.getPropertyName().equals(fieldName)){
                 return !p.getPermission().equals(Permission.Type.NO_ACCESS) && !p.getPermission().equals(Permission.Type.READ);
             }
         }
-        return true;
+        LOGGER.error("No permission defined for field {} on object {}", fieldName, access.getObjectClass());
+        throw new FilterException(String.format("No permission defined for field %s on object %s", fieldName, access.getObjectClass()));
     }
 
     public static Set<Field> getAllFields(Object o){
@@ -96,9 +95,7 @@ public class FilterUtil {
         try {
             ClassPath classPath = ClassPath.from(Thread.currentThread().getContextClassLoader());
             Set<ClassPath.ClassInfo> classInfo = classPath.getTopLevelClasses(path);
-            List<Class> classes = new ArrayList<>(classInfo.size());
-            classes.addAll(classInfo.stream().map(ClassPath.ClassInfo::load).collect(Collectors.toList()));
-            return classes;
+            return classInfo.stream().map(ClassPath.ClassInfo::load).collect(Collectors.toList());
         } catch (IOException e) {
             LOGGER.error(e.getMessage(), e);
             throw new FilterException("An issue occurred while trying to read objects on the ClassPath " +path);
@@ -121,6 +118,7 @@ public class FilterUtil {
         return objects;
     }
 
+    //TODO Split field part into separate method as well
     public static Access createDefaultAccessFromClass(Class c){
         Access access = buildBaseAccess(c);
         List<Permission> permissions = new ArrayList<>();
@@ -140,10 +138,10 @@ public class FilterUtil {
             }
             else {
                 permission.setPermission(DEFAULT_PERMISSION_TYPE);
+                permission.setModifiable(true);
             }
             permission.setPropertyName(f.getName());
             permission.setDisplayName(buildDisplayName(f.getName()));
-            permission.setModifiable(true);
             permissions.add(permission);
         }
         Collections.sort(permissions);

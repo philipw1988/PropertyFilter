@@ -33,12 +33,15 @@ public class TestPropertyFilterReturn {
     private TestClass testClass;
     private SecondTestClass secondTestClass1;
     private String secondTestName1 = "Second Test";
+    private String secondTestSecret1 = "Secret 1";
     private Integer secondTestInt1 = 2;
     private SecondTestClass secondTestClass2;
     private String secondTestName2 = "Second Test 2";
+    private String secondTestSecret2 = "Secret 2";
     private Integer secondTestInt2 = 12;
     private SecondTestClass secondTestClass3;
     private String secondTestName3 = "Second Test 3";
+    private String secondTestSecret3 = "Secret 3";
     private Integer secondTestInt3 = 22;
 
     private PropertyFilter propertyFilter;
@@ -48,11 +51,11 @@ public class TestPropertyFilterReturn {
     @Before
     public void setUp(){
         List<SecondTestClass> secondTestClasses = new ArrayList<>(3);
-        secondTestClass1 = new SecondTestClass(secondTestName1, secondTestInt1);
+        secondTestClass1 = new SecondTestClass(secondTestName1, secondTestInt1, secondTestSecret1);
         secondTestClasses.add(secondTestClass1);
-        secondTestClass2 = new SecondTestClass(secondTestName2, secondTestInt2);
+        secondTestClass2 = new SecondTestClass(secondTestName2, secondTestInt2, secondTestSecret2);
         secondTestClasses.add(secondTestClass2);
-        secondTestClass3 = new SecondTestClass(secondTestName3, secondTestInt3);
+        secondTestClass3 = new SecondTestClass(secondTestName3, secondTestInt3, secondTestSecret3);
         secondTestClasses.add(secondTestClass3);
 
         testClass = new TestClass();
@@ -128,12 +131,9 @@ public class TestPropertyFilterReturn {
         TestClass t = propertyFilter.parseObjectForReturn(testClass, username);
         Assert.assertNotNull(t);
         Assert.assertEquals(testBD1, t.getTestBD());
-        for(String s : t.getStringList()){
-            Assert.assertTrue(testClass.getStringList().contains(s));
-        }
-        for(SecondTestClass s : t.getSecondTestClasses()){
-            Assert.assertTrue(t.getSecondTestClasses().contains(s));
-        }
+        // Check both lists contain the same values
+        Assert.assertArrayEquals(testClass.getStringList().toArray(), t.getStringList().toArray());
+        Assert.assertArrayEquals(testClass.getSecondTestClasses().toArray(), t.getSecondTestClasses().toArray());
     }
 
     @Test(expected = PropertyFilterException.class)
@@ -164,5 +164,26 @@ public class TestPropertyFilterReturn {
         propertyFilter.setGroups(Collections.singletonList(group));
 
         propertyFilter.parseObjectForReturn(new TestClass(), username, "Silly Group Name");
+    }
+
+    /* Even though the "secret" field is @NoAccess on SecondTestClass, it should be copied over since we're not filtering collections */
+    @Test
+    public void testIgnoreFilterCollection() throws PropertyFilterException {
+        propertyFilter = new PropertyFilter();
+        propertyFilter.filterCollectionsOnLoad(false);
+        FilterUtil.setDefaultAccessType(Access.Type.CREATE);
+        FilterUtil.setDefaultPermissionType(Permission.Type.WRITE);
+        List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        Group group = new Group();
+        group.setName(groupName);
+        group.setAccess(accessList);
+        group.setMembers(Collections.singletonList(username));
+        propertyFilter.setGroups(Collections.singletonList(group));
+
+        TestClass result = propertyFilter.parseObjectForReturn(testClass, username);
+        Assert.assertEquals(3, result.getSecondTestClasses().size());
+        Assert.assertNotNull(result.getSecondTestClasses().get(0));
+        Assert.assertNotNull(result.getSecondTestClasses().get(1));
+        Assert.assertNotNull(result.getSecondTestClasses().get(2));
     }
 }

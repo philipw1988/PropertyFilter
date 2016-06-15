@@ -6,10 +6,9 @@ import org.junit.Test;
 import uk.co.agware.filter.PropertyFilter;
 import uk.co.agware.filter.exceptions.PropertyFilterException;
 import uk.co.agware.filter.objects.Access;
-import uk.co.agware.filter.objects.Permission;
 import uk.co.agware.filter.objects.Group;
-import uk.co.agware.filter.test.classes.SecondTestClass;
-import uk.co.agware.filter.test.classes.TestClass;
+import uk.co.agware.filter.objects.Permission;
+import uk.co.agware.filter.test.classes.*;
 import uk.co.agware.filter.util.FilterUtil;
 
 import java.util.Collections;
@@ -42,13 +41,11 @@ public class TestPropertyFilter {
 
     @Test
     public void testFilteringSettings(){
-        // Test Default
+        // Tests Default
         Assert.assertTrue(propertyFilter.filterCollectionsOnLoad());
         Assert.assertTrue(propertyFilter.filterCollectionsOnSave());
-
         propertyFilter.filterCollectionsOnSave(false);
         propertyFilter.filterCollectionsOnLoad(false);
-
         Assert.assertFalse(propertyFilter.filterCollectionsOnLoad());
         Assert.assertFalse(propertyFilter.filterCollectionsOnSave());
     }
@@ -74,46 +71,32 @@ public class TestPropertyFilter {
     public void testLoad(){
         Assert.assertEquals(propertyFilter.getUsersGroup(username), groupName);
         Map<String, Access> storedGroup = propertyFilter.getGroup(propertyFilter.getUsersGroup(username));
-        Assert.assertEquals(3, storedGroup.keySet().size());
+        Assert.assertEquals(5, storedGroup.keySet().size());
+        Assert.assertTrue(storedGroup.keySet().contains(TestClass.class.getName()));
+        Assert.assertTrue(storedGroup.keySet().contains(NoPublicConstructor.class.getName()));
+        Assert.assertTrue(storedGroup.keySet().contains(NoDefaultConstructor.class.getName()));
+        Assert.assertTrue(storedGroup.keySet().contains(SecondTestClass.class.getName()));
+        Assert.assertTrue(storedGroup.keySet().contains(NoAccessClass.class.getName()));
+    }
 
-        for(Map.Entry<String, Access> e : propertyFilter.getGroup(propertyFilter.getUsersGroup(username)).entrySet()){
-            Assert.assertEquals(Access.Type.NO_ACCESS, e.getValue().getAccess());
-        }
+    @Test
+    public void testGetAccess() throws PropertyFilterException {
+        Access access = propertyFilter.getAccess(TestClass.class, username);
+        Assert.assertEquals(new Access(TestClass.class.getName(), Access.Type.NO_ACCESS, true), access);
+
+        access = propertyFilter.getAccess(SecondTestClass.class, username);
+        Assert.assertEquals(new Access(SecondTestClass.class.getName(), Access.Type.READ, false), access);
+
+        access = propertyFilter.getAccess(NoPublicConstructor.class, username);
+        Assert.assertEquals(new Access(NoPublicConstructor.class.getName(), Access.Type.CREATE, false), access);
+
+        access = propertyFilter.getAccess(NoDefaultConstructor.class, username);
+        Assert.assertEquals(new Access(NoDefaultConstructor.class.getName(), Access.Type.UPDATE, false), access);
     }
 
     @Test
     public void testGetAvailableClasses(){
-        Assert.assertEquals(0, propertyFilter.getAccessibleClasses(username).size());
-
-        FilterUtil.setDefaultAccessType(Access.Type.CREATE);
-        List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
-        Group group = new Group();
-        group.setName(groupName);
-        group.setAccess(accessList);
-        group.setMembers(Collections.singletonList(username));
-        propertyFilter.setGroups(Collections.singletonList(group));
-
-        Assert.assertEquals(2, propertyFilter.getAccessibleClasses(username).size());
-
-        FilterUtil.setDefaultAccessType(Access.Type.READ);
-        accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
-        group = new Group();
-        group.setName(groupName);
-        group.setAccess(accessList);
-        group.setMembers(Collections.singletonList(username));
-        propertyFilter.setGroups(Collections.singletonList(group));
-
-        Assert.assertEquals(2, propertyFilter.getAccessibleClasses(username).size());
-
-        FilterUtil.setDefaultAccessType(Access.Type.UPDATE);
-        accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
-        group = new Group();
-        group.setName(groupName);
-        group.setAccess(accessList);
-        group.setMembers(Collections.singletonList(username));
-        propertyFilter.setGroups(Collections.singletonList(group));
-
-        Assert.assertEquals(2, propertyFilter.getAccessibleClasses(username).size());
+        Assert.assertEquals(3, propertyFilter.getAccessibleClasses(username).size()); // The three objects with hardcoded values
     }
 
     @Test
@@ -128,7 +111,7 @@ public class TestPropertyFilter {
 
         String groupName = propertyFilter.getUsersGroup(username);
         List<String> availableClasses = propertyFilter.getAccessibleClassesForGroup(groupName);
-        Assert.assertEquals(2, availableClasses.size());
+        Assert.assertEquals(4, availableClasses.size());
     }
 
     @Test

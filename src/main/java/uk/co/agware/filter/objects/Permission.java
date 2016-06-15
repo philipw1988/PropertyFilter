@@ -15,6 +15,12 @@ public class Permission implements Comparable<Permission> {
         this.modifiable = false;
     }
 
+    public Permission(String propertyName, Type permission, boolean modifiable) {
+        this.propertyName = propertyName;
+        this.permission = permission;
+        this.modifiable = modifiable;
+    }
+
     public Permission(Permission p) {
         if(p == null) throw new IllegalArgumentException("Trying to create a copy of a null Permission");
         this.propertyName = p.getPropertyName();
@@ -59,23 +65,20 @@ public class Permission implements Comparable<Permission> {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Permission)) return false;
-        if (!super.equals(o)) return false;
 
         Permission that = (Permission) o;
 
-        if (displayName != null ? !displayName.equals(that.displayName) : that.displayName != null) return false;
-        if (permission != that.permission) return false;
+        if (modifiable != that.modifiable) return false;
         if (propertyName != null ? !propertyName.equals(that.propertyName) : that.propertyName != null) return false;
+        return permission == that.permission;
 
-        return true;
     }
 
     @Override
     public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + (propertyName != null ? propertyName.hashCode() : 0);
-        result = 31 * result + (displayName != null ? displayName.hashCode() : 0);
+        int result = propertyName != null ? propertyName.hashCode() : 0;
         result = 31 * result + (permission != null ? permission.hashCode() : 0);
+        result = 31 * result + (modifiable ? 1 : 0);
         return result;
     }
 

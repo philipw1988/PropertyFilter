@@ -4,7 +4,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import uk.co.agware.filter.PropertyFilter;
-import uk.co.agware.filter.exceptions.FilterException;
 import uk.co.agware.filter.exceptions.PropertyFilterException;
 import uk.co.agware.filter.objects.Access;
 import uk.co.agware.filter.objects.Group;
@@ -35,12 +34,15 @@ public class TestPropertyFilterSave {
     private TestClass testClass;
     private SecondTestClass secondTestClass1;
     private String secondTestId1 = "Second Test";
+    private String secondTestSecret1 = "Secret 1";
     private Integer secondTestInt1 = 2;
     private SecondTestClass secondTestClass2;
     private String secondTestId2 = "Second Test 2";
+    private String secondTestSecret2 = "Secret 1";
     private Integer secondTestInt2 = null;
     private SecondTestClass secondTestClass3;
     private String secondTestId3 = "Second Test 3";
+    private String secondTestSecret3 = "Secret 1";
     private Integer secondTestInt3 = 22;
 
     private String testString2 = "String";
@@ -52,12 +54,15 @@ public class TestPropertyFilterSave {
     private TestClass testClass2;
     private SecondTestClass stc1;
     private String secondTestId21 = "Second Test";
+    private String secondTestSecret21 = "Secret 1";
     private Integer secondTestInt11 = 22;
     private SecondTestClass stc2;
     private String secondTestId22 = "Second Test 2";
+    private String secondTestSecret22 = "Secret 1";
     private Integer secondTestInt22 = 212;
     private SecondTestClass stc3;
     private String secondTestId23 = "Second Test 3";
+    private String secondTestSecret23 = "Secret 1";
     private Integer secondTestInt23 = 222;
 
     private PropertyFilter propertyFilter;
@@ -67,11 +72,11 @@ public class TestPropertyFilterSave {
     @Before
     public void setUp(){
         List<SecondTestClass> secondTestClasses = new ArrayList<>(3);
-        secondTestClass1 = new SecondTestClass(secondTestId1, secondTestInt1);
+        secondTestClass1 = new SecondTestClass(secondTestId1, secondTestInt1, secondTestSecret1);
         secondTestClasses.add(secondTestClass1);
-        secondTestClass2 = new SecondTestClass(secondTestId2, secondTestInt2);
+        secondTestClass2 = new SecondTestClass(secondTestId2, secondTestInt2, secondTestSecret2);
         secondTestClasses.add(secondTestClass2);
-        secondTestClass3 = new SecondTestClass(secondTestId3, secondTestInt3);
+        secondTestClass3 = new SecondTestClass(secondTestId3, secondTestInt3, secondTestSecret3);
         secondTestClasses.add(secondTestClass3);
 
         testClass = new TestClass();
@@ -81,11 +86,11 @@ public class TestPropertyFilterSave {
         testClass.setStringList(new ArrayList<>(Arrays.asList(listString1, listString2, listString3)));
 
         List<SecondTestClass> secondTestClasses2 = new ArrayList<>(3);
-        stc1 = new SecondTestClass(secondTestId21, secondTestInt11);
+        stc1 = new SecondTestClass(secondTestId21, secondTestInt11, secondTestSecret21);
         secondTestClasses2.add(stc1);
-        stc2 = new SecondTestClass(secondTestId22, secondTestInt22);
+        stc2 = new SecondTestClass(secondTestId22, secondTestInt22, secondTestSecret22);
         secondTestClasses2.add(stc2);
-        stc3 = new SecondTestClass(secondTestId23, secondTestInt23);
+        stc3 = new SecondTestClass(secondTestId23, secondTestInt23, secondTestSecret23);
         secondTestClasses2.add(stc3);
 
         testClass2 = new TestClass();
@@ -97,7 +102,7 @@ public class TestPropertyFilterSave {
         propertyFilter = new PropertyFilter();
     }
 
-    @Test(expected = IllegalAccessException.class)
+    @Test
     public void testNoAccess() throws IllegalAccessException, PropertyFilterException {
         FilterUtil.setDefaultAccessType(Access.Type.NO_ACCESS);
         FilterUtil.setDefaultPermissionType(Permission.Type.NO_ACCESS);
@@ -111,7 +116,7 @@ public class TestPropertyFilterSave {
         propertyFilter.parseObjectForSaving(testClass, testClass2, username);
     }
 
-    @Test(expected = IllegalAccessException.class)
+    @Test
     public void testReadAccess() throws IllegalAccessException, PropertyFilterException {
         FilterUtil.setDefaultAccessType(Access.Type.READ);
         FilterUtil.setDefaultPermissionType(Permission.Type.NO_ACCESS);
@@ -184,9 +189,9 @@ public class TestPropertyFilterSave {
         Assert.assertTrue(testClass2.getStringList().contains(listString1));
         Assert.assertTrue(testClass2.getStringList().contains(listString2));
         Assert.assertTrue(testClass2.getStringList().contains(listString3));
-        Assert.assertTrue(testClass2.getSecondTestClasses().contains(new SecondTestClass(secondTestId21, secondTestInt1)));
-        Assert.assertTrue(testClass2.getSecondTestClasses().contains(new SecondTestClass(secondTestId22, secondTestInt2)));
-        Assert.assertTrue(testClass2.getSecondTestClasses().contains(new SecondTestClass(secondTestId23, secondTestInt3)));
+        Assert.assertTrue(testClass2.getSecondTestClasses().contains(new SecondTestClass(secondTestId21, secondTestInt1, null)));
+        Assert.assertTrue(testClass2.getSecondTestClasses().contains(new SecondTestClass(secondTestId22, secondTestInt2, null)));
+        Assert.assertTrue(testClass2.getSecondTestClasses().contains(new SecondTestClass(secondTestId23, secondTestInt3, null)));
     }
 
     @Test
@@ -213,7 +218,7 @@ public class TestPropertyFilterSave {
         Assert.assertTrue(testClass2.getSecondTestClasses().contains(secondTestClass3));
     }
 
-    @Test(expected = FilterException.class)
+    @Test
     public void testNoDefinedAccess() throws IllegalAccessException, PropertyFilterException {
         FilterUtil.setDefaultAccessType(Access.Type.CREATE);
         FilterUtil.setDefaultPermissionType(Permission.Type.WRITE);
@@ -259,11 +264,11 @@ public class TestPropertyFilterSave {
         propertyFilter.setGroups(Collections.singletonList(group));
 
         List<SecondTestClass> secondTestClasses = new ArrayList<>(3);
-        stc1 = new SecondTestClass("1", 123);
+        stc1 = new SecondTestClass("1", 123, null);
         secondTestClasses.add(stc1);
-        stc2 = new SecondTestClass("2", 234);
+        stc2 = new SecondTestClass("2", 234, null);
         secondTestClasses.add(stc2);
-        stc3 = new SecondTestClass("3", 345);
+        stc3 = new SecondTestClass("3", 345, null);
         secondTestClasses.add(stc3);
         TestClass tc3 = new TestClass();
         tc3.setSecondTestClasses(secondTestClasses);

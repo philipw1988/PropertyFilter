@@ -1,24 +1,28 @@
 package uk.co.agware.filter.test.classes;
 
 import uk.co.agware.filter.annotations.FilterTarget;
+import uk.co.agware.filter.annotations.NoAccess;
 import uk.co.agware.filter.annotations.ReadOnly;
 
 /**
  * Created by Philip Ward <Philip.Ward@agware.com> on 10/04/2016.
  */
 @FilterTarget("Second Test Class")
+@ReadOnly
 public class SecondTestClass {
 
     @ReadOnly
     private String id;
     private Integer number;
+    @NoAccess private String secret;
 
     public SecondTestClass() {
     }
 
-    public SecondTestClass(String id, Integer number) {
+    public SecondTestClass(String id, Integer number, String secret) {
         this.id = id;
         this.number = number;
+        this.secret = secret;
     }
 
     public String getId() {
@@ -35,6 +39,14 @@ public class SecondTestClass {
 
     public void setNumber(Integer number) {
         this.number = number;
+    }
+
+    public String getSecret() {
+        return secret;
+    }
+
+    public void setSecret(String secret) {
+        this.secret = secret;
     }
 
     @Override
