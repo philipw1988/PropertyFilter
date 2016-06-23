@@ -6,6 +6,7 @@ package uk.co.agware.filter.objects;
 public class Permission implements Comparable<Permission> {
 
     public enum Type {READ, WRITE, NO_ACCESS}
+
     private String propertyName;
     private String displayName;
     private Type permission;

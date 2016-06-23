@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 public class Access implements Comparable<Access> {
 
     public enum Type {NO_ACCESS, READ, CREATE, UPDATE}
+
     private String objectClass;
     private String displayName;
     private Type access;
