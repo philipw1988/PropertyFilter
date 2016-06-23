@@ -106,6 +106,10 @@ public class FilterUtil {
         return classes.stream().filter(c -> !Modifier.isAbstract(c.getModifiers()) && c.isAnnotationPresent(FilterTarget.class)).collect(Collectors.toList());
     }
 
+    public static List<Class> getAllIgnoredClasses(String path){
+        return getAllClasses(path).stream().filter(c -> c.isAnnotationPresent(FilterIgnored.class)).collect(Collectors.toList());
+    }
+
     /* Returns a complete list of all non-hidden objects and fields for all classes */
     public static List<Access> getFullAccessList(String path){
         List<Class> classes = getAllAvailableClasses(getAllClasses(path));

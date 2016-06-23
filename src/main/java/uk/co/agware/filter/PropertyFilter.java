@@ -229,6 +229,9 @@ public class PropertyFilter {
 
     @SuppressWarnings("unchecked")
     public <T> T parseObjectForReturn(T object, String username, String groupName) throws PropertyFilterException {
+        if(object == null) return null;
+        if(ignoredClasses.contains(object.getClass())) return object; // If it's a class we're ignoring then just return the value
+
         Set<Field> fields = FilterUtil.getAllFields(object);
         Map<String, Access> accessMap = getGroup(groupName);
         if(accessMap == null) {
@@ -247,6 +250,8 @@ public class PropertyFilter {
                     PropertyDescriptor pd = new PropertyDescriptor(f.getName(), object.getClass());
                     Object value = pd.getReadMethod().invoke(object);
                     if (!Collection.class.isAssignableFrom(f.getType())) {
+                        // Parse down sub values, will escape on ignored classes
+                        value = parseObjectForReturn(value, username, groupName);
                         pd.getWriteMethod().invoke(obj, value);
                     }
                     else {
@@ -296,6 +301,9 @@ public class PropertyFilter {
             LOGGER.error("Null value passed into save method");
             throw new IllegalArgumentException("Null value passed into the filter save method");
         }
+
+        if(ignoredClasses.contains(newObject.getClass())) return newObject; // If we're ignoring the value, just return the new one
+
         Set<Field> fields = FilterUtil.getAllFields(newObject);
         Map<String, Access> accessMap = getGroup(groupName);
         if(accessMap == null) throw new FilterException(String.format("Group %s does not exist in current groups map", groupName));
@@ -312,10 +320,15 @@ public class PropertyFilter {
                     PropertyDescriptor pd = new PropertyDescriptor(f.getName(), newObject.getClass());
                     Object newValue = pd.getReadMethod().invoke(newObject);
                     if (!Collection.class.isAssignableFrom(f.getType())) {
-                        pd.getWriteMethod().invoke(existingObject, newValue);
+                        // If it's a normal class then we filter again, ignored classes will return full value
+                        if(newValue != null) {
+                            Object existingValue = pd.getReadMethod().invoke(existingObject);
+                            newValue = parseObjectForSaving(newValue, existingValue, username, groupName);
+                            pd.getWriteMethod().invoke(existingObject, newValue);
+                        }
                     }
                     else {
-                        if(newValue == null){
+                        if(newValue == null){ // Null collection can be ignored
                             pd.getWriteMethod().invoke(existingObject, newValue);
                         }
                         else {

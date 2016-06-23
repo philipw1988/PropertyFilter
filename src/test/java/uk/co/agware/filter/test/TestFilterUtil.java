@@ -114,9 +114,16 @@ public class TestFilterUtil {
     @Test
     public void testGetAllClasses(){
         List<Class> classes = FilterUtil.getAllClasses("uk.co.agware.filter.test.classes");
-        Assert.assertEquals(6, classes.size());
+        Assert.assertEquals(7, classes.size());
         List<Class> availableClasses = FilterUtil.getAllAvailableClasses(classes);
         Assert.assertEquals(5, availableClasses.size());
+    }
+
+    @Test
+    public void testGetAllIgnoredClasses(){
+        List<Class> classes = FilterUtil.getAllIgnoredClasses("uk.co.agware.filter.test.classes");
+        Assert.assertEquals(1, classes.size());
+        Assert.assertTrue(classes.contains(IgnoredClass.class));
     }
 
     @Test
