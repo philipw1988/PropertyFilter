@@ -48,19 +48,6 @@
 
     </dependencies>
 
-    <distributionManagement>
-        <repository>
-            <id>releases</id>
-            <name>Releases</name>
-            <url>http://agnexus.northeurope.cloudapp.azure.com:8081/nexus/content/repositories/releases</url>
-        </repository>
-        <snapshotRepository>
-            <id>snapshots</id>
-            <name>Snapshots</name>
-            <url>http://agnexus.northeurope.cloudapp.azure.com:8081/nexus/content/repositories/snapshots</url>
-        </snapshotRepository>
-    </distributionManagement>
-
     <build>
         <plugins>
             <plugin>
