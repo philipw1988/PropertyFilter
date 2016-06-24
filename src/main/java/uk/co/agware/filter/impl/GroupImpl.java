@@ -1,20 +1,25 @@
 package uk.co.agware.filter.impl;
 
-import uk.co.agware.filter.data.IAccess;
-import uk.co.agware.filter.data.IGroup;
+import uk.co.agware.filter.data.Access;
+import uk.co.agware.filter.data.Group;
 
 import java.util.List;
 
 /**
  * Created by Philip Ward <Philip.Ward@agware.com> on 17/09/2015.
  */
-public class GroupImpl implements IGroup {
+public class GroupImpl implements Group {
 
     private String name;
     private List<String> members;
-    private List<IAccess> access;
+    private List<Access> access;
 
     public GroupImpl() {
+    }
+
+    @Override
+    public String getId() {
+        return null;
     }
 
     @Override
@@ -38,13 +43,13 @@ public class GroupImpl implements IGroup {
     }
 
     @Override
-    public List<IAccess> getAccess() {
+    public List<Access> getAccess() {
         return access;
     }
 
     @Override
-    public <T extends IAccess> void setAccess(List<T> accessList) {
-        access = (List<IAccess>) accessList;
+    public <T extends Access> void setAccess(List<T> accessList) {
+        access = (List<Access>) accessList;
     }
 
     @Override
@@ -61,7 +66,7 @@ public class GroupImpl implements IGroup {
     }
 
     @Override
-    public int compareTo(IGroup o) {
+    public int compareTo(Group o) {
         if(this.name == null) return -1;
         if(o.getName() == null) return 1;
         return this.name.compareTo(o.getName());

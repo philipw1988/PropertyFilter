@@ -16,6 +16,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created by Philip Ward <Philip.Ward@agware.com> on 20/02/2016.
@@ -43,8 +44,8 @@ public class FilterUtil {
         DEFAULT_PERMISSION_TYPE = defaultPermissionType;
     }
 
-    public boolean isFieldReadable(String fieldName, IAccess access){
-        for(IPermission p : nullSafe(access.getPermissions())){
+    public boolean isFieldReadable(String fieldName, Access access){
+        for(Permission p : nullSafe(access.getPermissions())){
             if(p.getPropertyName().equals(fieldName)){
                 return !p.getPermission().equals(PermissionType.NO_ACCESS);
             }
@@ -53,8 +54,8 @@ public class FilterUtil {
         throw new FilterException(String.format("No permission defined for field %s on object %s", fieldName, access.getObjectClass()));
     }
 
-    public boolean isFieldWritable(String fieldName, IAccess access){
-        for(IPermission p : nullSafe(access.getPermissions())){
+    public boolean isFieldWritable(String fieldName, Access access){
+        for(Permission p : nullSafe(access.getPermissions())){
             if(p.getPropertyName().equals(fieldName)){
                 return !p.getPermission().equals(PermissionType.NO_ACCESS) && !p.getPermission().equals(PermissionType.READ);
             }
@@ -98,23 +99,22 @@ public class FilterUtil {
     }
 
     /* Returns a complete list of all non-hidden objects and fields for all classes */
-    public List<IAccess> getFullAccessList(String path){
+    public <T extends Access> List<T> getFullAccessList(String path){
         List<Class> classes = getAllAvailableClasses(getAllClasses(path));
-        List<IAccess> objects = new ArrayList<>();
+        List<T> objects = new ArrayList<>();
         for(Class c : classes){
-            IAccess access = createDefaultAccessFromClass(c);
+            T access = createDefaultAccessFromClass(c);
             objects.add(access);
         }
         Collections.sort(objects);
         return objects;
     }
 
-    //TODO Split field part into separate method as well
-    public IAccess createDefaultAccessFromClass(Class c){
-        IAccess access = buildBaseAccess(c);
-        List<IPermission> permissions = new ArrayList<>();
+    public <T extends Access> T createDefaultAccessFromClass(Class c){
+        T access = buildBaseAccess(c);
+        List<Permission> permissions = new ArrayList<>();
         for(Field f : getAllFields(c)){
-            IPermission permission = classFactory.createPermissionClass();
+            Permission permission = classFactory.createPermissionClass();
             if(f.isAnnotationPresent(NoAccess.class)){
                 permission.setPermission(PermissionType.NO_ACCESS);
                 permission.setModifiable(false);
@@ -140,8 +140,8 @@ public class FilterUtil {
         return access;
     }
 
-    public IAccess buildBaseAccess(Class c){
-        IAccess access = classFactory.createAccessClass();
+    public <T extends Access> T buildBaseAccess(Class c){
+        T access = classFactory.createAccessClass();
         access.setObjectClass(c.getName());
 
         FilterTarget ft = (FilterTarget) c.getAnnotation(FilterTarget.class);
@@ -188,6 +188,10 @@ public class FilterUtil {
     // Returns and empty list if the collection passed in is null
     public static <T> Collection<T> nullSafe(Collection<T> collection){
         return collection == null ? Collections.emptyList() : collection;
+    }
+
+    public static <T> Stream<T> nullSafeStream(Collection<T> collection){
+        return nullSafe(collection).stream();
     }
 
     public static String capitalizeFirst(String input){

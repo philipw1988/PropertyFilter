@@ -5,7 +5,9 @@ import java.util.List;
 /**
  * Created by Philip Ward <Philip.Ward@agware.com> on 24/06/2016.
  */
-public interface IGroup extends Comparable<IGroup> {
+public interface Group extends Comparable<Group> {
+
+    String getId();
 
     String getName();
 
@@ -15,7 +17,7 @@ public interface IGroup extends Comparable<IGroup> {
 
     void setMembers(List<String> members);
 
-    List<IAccess> getAccess();
+    List<Access> getAccess();
 
-    <T extends IAccess> void setAccess(List<T> accessList);
+    <T extends Access> void setAccess(List<T> accessList);
 }

@@ -1,12 +1,12 @@
 package uk.co.agware.filter.impl;
 
-import uk.co.agware.filter.data.IPermission;
+import uk.co.agware.filter.data.Permission;
 import uk.co.agware.filter.data.PermissionType;
 
 /**
  * Created by Philip Ward <Philip.Ward@agware.com> on 17/09/2015.
  */
-public class PermissionImpl implements IPermission {
+public class PermissionImpl implements Permission {
 
     private String propertyName;
     private String displayName;
@@ -77,7 +77,7 @@ public class PermissionImpl implements IPermission {
     }
 
     @Override
-    public int compareTo(IPermission o) {
+    public int compareTo(Permission o) {
         if(this.displayName == null) return -1;
         if(o.getDisplayName() == null) return 1;
         return this.displayName.compareTo(o.getDisplayName());

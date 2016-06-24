@@ -4,8 +4,8 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import uk.co.agware.filter.data.AccessType;
-import uk.co.agware.filter.data.IAccess;
-import uk.co.agware.filter.data.IPermission;
+import uk.co.agware.filter.data.Access;
+import uk.co.agware.filter.data.Permission;
 import uk.co.agware.filter.data.PermissionType;
 import uk.co.agware.filter.impl.AccessImpl;
 import uk.co.agware.filter.impl.DefaultClassFactory;
@@ -29,7 +29,7 @@ public class TestDefaultClasses extends Assert {
 
     @Test
     public void testCreateNewAccess(){
-        IAccess access = defaultClassFactory.createAccessClass();
+        Access access = defaultClassFactory.createAccessClass();
         assertNotNull(access);
         assertEquals(AccessImpl.class, access.getClass());
     }
@@ -68,7 +68,7 @@ public class TestDefaultClasses extends Assert {
 
     @Test
     public void testCreatePermission(){
-        IPermission permission = defaultClassFactory.createPermissionClass();
+        Permission permission = defaultClassFactory.createPermissionClass();
         assertNotNull(permission);
         assertEquals(PermissionImpl.class, permission.getClass());
     }

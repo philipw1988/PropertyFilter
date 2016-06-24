@@ -5,7 +5,7 @@ import java.util.List;
 /**
  * Created by Philip Ward <Philip.Ward@agware.com> on 24/06/2016.
  */
-public interface IAccess extends Comparable<IAccess> {
+public interface Access extends Comparable<Access> {
 
     String getObjectClass();
 
@@ -19,9 +19,9 @@ public interface IAccess extends Comparable<IAccess> {
 
     void setAccess(AccessType read);
 
-    List<IPermission> getPermissions();
+    List<Permission> getPermissions();
 
-    <T extends IPermission> void setPermissions(List<T> permissions);
+    <T extends Permission> void setPermissions(List<T> permissions);
 
     boolean isModifiable();
 

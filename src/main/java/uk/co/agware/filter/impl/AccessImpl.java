@@ -1,21 +1,21 @@
 package uk.co.agware.filter.impl;
 
 import uk.co.agware.filter.data.AccessType;
-import uk.co.agware.filter.data.IAccess;
-import uk.co.agware.filter.data.IPermission;
+import uk.co.agware.filter.data.Access;
+import uk.co.agware.filter.data.Permission;
 
 import java.util.List;
 
 /**
  * Created by Philip Ward <Philip.Ward@agware.com> on 17/09/2015.
  */
-public class AccessImpl implements IAccess {
+public class AccessImpl implements Access {
 
     private String objectClass;
     private String displayName;
     private AccessType access;
     private boolean modifiable;
-    private List<IPermission> permissions;
+    private List<Permission> permissions;
 
     public AccessImpl() {
         modifiable = false;
@@ -58,13 +58,13 @@ public class AccessImpl implements IAccess {
     }
 
     @Override
-    public List<IPermission> getPermissions() {
+    public List<Permission> getPermissions() {
         return permissions;
     }
 
     @Override
-    public <T extends IPermission> void setPermissions(List<T> permissions) {
-        this.permissions = (List<IPermission>) permissions;
+    public <T extends Permission> void setPermissions(List<T> permissions) {
+        this.permissions = (List<Permission>) permissions;
     }
 
     @Override
@@ -99,7 +99,7 @@ public class AccessImpl implements IAccess {
     }
 
     @Override
-    public int compareTo(IAccess o) {
+    public int compareTo(Access o) {
         if(this.objectClass == null) return -1;
         if(o.getObjectClass() == null) return 1;
         return this.objectClass.compareTo(o.getObjectClass());

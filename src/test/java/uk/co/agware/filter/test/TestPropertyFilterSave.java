@@ -5,7 +5,7 @@ import org.junit.Before;
 import org.junit.Test;
 import uk.co.agware.filter.PropertyFilter;
 import uk.co.agware.filter.data.AccessType;
-import uk.co.agware.filter.data.IAccess;
+import uk.co.agware.filter.data.Access;
 import uk.co.agware.filter.data.PermissionType;
 import uk.co.agware.filter.exceptions.PropertyFilterException;
 import uk.co.agware.filter.impl.DefaultClassFactory;
@@ -110,7 +110,7 @@ public class TestPropertyFilterSave {
     public void testNoAccess() throws IllegalAccessException, PropertyFilterException {
         filterUtil.setDefaultAccessType(AccessType.NO_ACCESS);
         filterUtil.setDefaultPermissionType(PermissionType.NO_ACCESS);
-        List<IAccess> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
         GroupImpl group = new GroupImpl();
         group.setName(groupName);
         group.setAccess(accessList);
@@ -124,7 +124,7 @@ public class TestPropertyFilterSave {
     public void testReadAccess() throws IllegalAccessException, PropertyFilterException {
         filterUtil.setDefaultAccessType(AccessType.READ);
         filterUtil.setDefaultPermissionType(PermissionType.NO_ACCESS);
-        List<IAccess> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
         GroupImpl group = new GroupImpl();
         group.setName(groupName);
         group.setAccess(accessList);
@@ -138,7 +138,7 @@ public class TestPropertyFilterSave {
     public void testUpdateAccessNoPermissions() throws IllegalAccessException, PropertyFilterException {
         filterUtil.setDefaultAccessType(AccessType.UPDATE);
         filterUtil.setDefaultPermissionType(PermissionType.NO_ACCESS);
-        List<IAccess> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
         GroupImpl group = new GroupImpl();
         group.setName(groupName);
         group.setAccess(accessList);
@@ -158,7 +158,7 @@ public class TestPropertyFilterSave {
     public void testCreateAccessNoPermissions() throws IllegalAccessException, PropertyFilterException {
         filterUtil.setDefaultAccessType(AccessType.CREATE);
         filterUtil.setDefaultPermissionType(PermissionType.NO_ACCESS);
-        List<IAccess> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
         GroupImpl group = new GroupImpl();
         group.setName(groupName);
         group.setAccess(accessList);
@@ -178,7 +178,7 @@ public class TestPropertyFilterSave {
     public void testUpdateAccessWritePermissions() throws IllegalAccessException, PropertyFilterException {
         filterUtil.setDefaultAccessType(AccessType.UPDATE);
         filterUtil.setDefaultPermissionType(PermissionType.WRITE);
-        List<IAccess> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
         GroupImpl group = new GroupImpl();
         group.setName(groupName);
         group.setAccess(accessList);
@@ -202,7 +202,7 @@ public class TestPropertyFilterSave {
     public void testCreateAccessWritePermissions() throws IllegalAccessException, PropertyFilterException {
         filterUtil.setDefaultAccessType(AccessType.CREATE);
         filterUtil.setDefaultPermissionType(PermissionType.WRITE);
-        List<IAccess> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
         GroupImpl group = new GroupImpl();
         group.setName(groupName);
         group.setAccess(accessList);
@@ -226,7 +226,7 @@ public class TestPropertyFilterSave {
     public void testNoDefinedAccess() throws IllegalAccessException, PropertyFilterException {
         filterUtil.setDefaultAccessType(AccessType.CREATE);
         filterUtil.setDefaultPermissionType(PermissionType.WRITE);
-        List<IAccess> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
         GroupImpl group = new GroupImpl();
         group.setName(groupName);
         group.setAccess(accessList);
@@ -240,7 +240,7 @@ public class TestPropertyFilterSave {
     public void testNoGroup() throws IllegalAccessException, PropertyFilterException {
         filterUtil.setDefaultAccessType(AccessType.CREATE);
         filterUtil.setDefaultPermissionType(PermissionType.WRITE);
-        List<IAccess> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
         GroupImpl group = new GroupImpl();
         group.setName(groupName);
         group.setAccess(accessList);
@@ -260,7 +260,7 @@ public class TestPropertyFilterSave {
     public void testIgnoredCollection() throws IllegalAccessException, PropertyFilterException {
         filterUtil.setDefaultAccessType(AccessType.CREATE);
         filterUtil.setDefaultPermissionType(PermissionType.WRITE);
-        List<IAccess> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
         GroupImpl group = new GroupImpl();
         group.setName(groupName);
         group.setAccess(accessList);

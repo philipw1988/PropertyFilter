@@ -1,7 +1,7 @@
 package uk.co.agware.filter.impl;
 
-import uk.co.agware.filter.data.IAccess;
-import uk.co.agware.filter.data.IPermission;
+import uk.co.agware.filter.data.Access;
+import uk.co.agware.filter.data.Permission;
 import uk.co.agware.filter.util.ClassFactory;
 import uk.co.agware.filter.util.FilterUtil;
 
@@ -18,7 +18,7 @@ public class DefaultClassFactory implements ClassFactory {
     }
 
     @Override
-    public AccessImpl copyAccessClass(IAccess old) {
+    public AccessImpl copyAccessClass(Access old) {
         AccessImpl access = new AccessImpl();
         if(old == null) throw new IllegalArgumentException("Trying to create a copy of a null Access");
         access.setObjectClass(old.getObjectClass());
@@ -35,7 +35,7 @@ public class DefaultClassFactory implements ClassFactory {
     }
 
     @Override
-    public PermissionImpl copyPermissionClass(IPermission old) {
+    public PermissionImpl copyPermissionClass(Permission old) {
         PermissionImpl permission = new PermissionImpl();
         if(old == null) throw new IllegalArgumentException("Trying to create a copy of a null Permission");
         permission.setPropertyName(old.getPropertyName());
