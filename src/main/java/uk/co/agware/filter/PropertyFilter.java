@@ -39,7 +39,7 @@ public class PropertyFilter {
 
     private FilterUtil filterUtil;
 
-    public PropertyFilter(FilterUtil filterUtil) {
+    PropertyFilter(FilterUtil filterUtil) {
         this.filterUtil = filterUtil;
     }
 
@@ -63,7 +63,7 @@ public class PropertyFilter {
         return filterCollectionOnLoad;
     }
 
-    public boolean collectionClassesContains(Class clazz){
+    public boolean ignoredClassesContains(Class clazz){
         return ignoredClasses.contains(clazz);
     }
 
@@ -112,7 +112,11 @@ public class PropertyFilter {
     public Map<String, Access> getGroup(String key){
         lock.readLock().lock();
         try {
-            return new HashMap<>(groups.get(key));
+            Map<String, Access> group = groups.get(key);
+            if(group != null){
+                return new HashMap<>(group);
+            }
+            return null;
         }
         finally {
             lock.readLock().unlock();

@@ -4,8 +4,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import uk.co.agware.filter.PropertyFilter;
-import uk.co.agware.filter.data.AccessType;
+import uk.co.agware.filter.PropertyFilterBuilder;
 import uk.co.agware.filter.data.Access;
+import uk.co.agware.filter.data.AccessType;
 import uk.co.agware.filter.data.PermissionType;
 import uk.co.agware.filter.exceptions.PropertyFilterException;
 import uk.co.agware.filter.impl.DefaultClassFactory;
@@ -103,7 +104,7 @@ public class TestPropertyFilterSave {
         testClass2.setStringList(new ArrayList<>(Arrays.asList(listString21, listString22, listString23)));
 
         filterUtil = new FilterUtil(new DefaultClassFactory());
-        propertyFilter = new PropertyFilter(filterUtil);
+        propertyFilter = new PropertyFilterBuilder().filterUtil(filterUtil).build();
     }
 
     @Test

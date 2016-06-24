@@ -4,8 +4,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import uk.co.agware.filter.PropertyFilter;
-import uk.co.agware.filter.data.AccessType;
+import uk.co.agware.filter.PropertyFilterBuilder;
 import uk.co.agware.filter.data.Access;
+import uk.co.agware.filter.data.AccessType;
 import uk.co.agware.filter.data.PermissionType;
 import uk.co.agware.filter.exceptions.PropertyFilterException;
 import uk.co.agware.filter.impl.DefaultClassFactory;
@@ -72,7 +73,7 @@ public class TestPropertyFilterReturn {
 
     @Test
     public void testReturnNoAccess() throws PropertyFilterException {
-        propertyFilter = new PropertyFilter(filterUtil);
+        propertyFilter = new PropertyFilterBuilder().filterUtil(filterUtil).build();
         filterUtil.setDefaultAccessType(AccessType.NO_ACCESS);
         filterUtil.setDefaultPermissionType(PermissionType.NO_ACCESS);
         List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
@@ -88,7 +89,7 @@ public class TestPropertyFilterReturn {
 
     @Test
     public void testReturnNoAccessWritePermission() throws PropertyFilterException {
-        propertyFilter = new PropertyFilter(filterUtil);
+        propertyFilter = new PropertyFilterBuilder().filterUtil(filterUtil).build();
         filterUtil.setDefaultAccessType(AccessType.NO_ACCESS);
         filterUtil.setDefaultPermissionType(PermissionType.WRITE);
         List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
@@ -104,7 +105,7 @@ public class TestPropertyFilterReturn {
 
     @Test
     public void testReturnReadAccessNoPermission() throws PropertyFilterException {
-        propertyFilter = new PropertyFilter(filterUtil);
+        propertyFilter = new PropertyFilterBuilder().filterUtil(filterUtil).build();
         filterUtil.setDefaultAccessType(AccessType.READ);
         filterUtil.setDefaultPermissionType(PermissionType.NO_ACCESS);
         List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
@@ -123,7 +124,7 @@ public class TestPropertyFilterReturn {
 
     @Test
     public void testReturnReadAccessReadPermission() throws PropertyFilterException {
-        propertyFilter = new PropertyFilter(filterUtil);
+        propertyFilter = new PropertyFilterBuilder().filterUtil(filterUtil).build();
         filterUtil.setDefaultAccessType(AccessType.READ);
         filterUtil.setDefaultPermissionType(PermissionType.READ);
         List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
@@ -143,7 +144,7 @@ public class TestPropertyFilterReturn {
 
     @Test(expected = PropertyFilterException.class)
     public void testUserHasNoGroup() throws PropertyFilterException {
-        propertyFilter = new PropertyFilter(filterUtil);
+        propertyFilter = new PropertyFilterBuilder().filterUtil(filterUtil).build();
         filterUtil.setDefaultAccessType(AccessType.READ);
         filterUtil.setDefaultPermissionType(PermissionType.READ);
         List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
@@ -158,7 +159,7 @@ public class TestPropertyFilterReturn {
 
     @Test(expected = PropertyFilterException.class)
     public void testUnknownGroupName() throws PropertyFilterException {
-        propertyFilter = new PropertyFilter(filterUtil);
+        propertyFilter = new PropertyFilterBuilder().filterUtil(filterUtil).build();
         filterUtil.setDefaultAccessType(AccessType.READ);
         filterUtil.setDefaultPermissionType(PermissionType.READ);
         List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
@@ -174,7 +175,7 @@ public class TestPropertyFilterReturn {
     /* Even though the "secret" field is @NoAccess on SecondTestClass, it should be copied over since we're not filtering collections */
     @Test
     public void testIgnoreFilterCollection() throws PropertyFilterException {
-        propertyFilter = new PropertyFilter(filterUtil);
+        propertyFilter = new PropertyFilterBuilder().filterUtil(filterUtil).build();
         propertyFilter.filterCollectionsOnLoad(false);
         filterUtil.setDefaultAccessType(AccessType.CREATE);
         filterUtil.setDefaultPermissionType(PermissionType.WRITE);

@@ -4,8 +4,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import uk.co.agware.filter.PropertyFilter;
-import uk.co.agware.filter.data.AccessType;
+import uk.co.agware.filter.PropertyFilterBuilder;
 import uk.co.agware.filter.data.Access;
+import uk.co.agware.filter.data.AccessType;
 import uk.co.agware.filter.data.Permission;
 import uk.co.agware.filter.data.PermissionType;
 import uk.co.agware.filter.exceptions.PropertyFilterException;
@@ -33,7 +34,7 @@ public class TestPropertyFilter {
     @Before
     public void setUp(){
         filterUtil = new FilterUtil(new DefaultClassFactory());
-        propertyFilter = new PropertyFilter(filterUtil);
+        propertyFilter = new PropertyFilterBuilder().filterUtil(filterUtil).build();
 
         filterUtil.setDefaultAccessType(AccessType.NO_ACCESS);
         filterUtil.setDefaultPermissionType(PermissionType.NO_ACCESS);
@@ -66,11 +67,11 @@ public class TestPropertyFilter {
 
     @Test
     public void testCollectionClasses(){
-        Assert.assertTrue(propertyFilter.collectionClassesContains(String.class));
+        Assert.assertTrue(propertyFilter.ignoredClassesContains(String.class));
         propertyFilter.addIgnoredClass(Short.class);
-        Assert.assertTrue(propertyFilter.collectionClassesContains(Short.class));
+        Assert.assertTrue(propertyFilter.ignoredClassesContains(Short.class));
         Assert.assertTrue(propertyFilter.removeCollectionClass(Short.class));
-        Assert.assertFalse(propertyFilter.collectionClassesContains(Short.class));
+        Assert.assertFalse(propertyFilter.ignoredClassesContains(Short.class));
     }
 
     @Test

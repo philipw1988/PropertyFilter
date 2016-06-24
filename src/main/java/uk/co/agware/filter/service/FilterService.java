@@ -10,10 +10,7 @@ import uk.co.agware.filter.exceptions.PropertyFilterException;
 import uk.co.agware.filter.persistence.FilterRepository;
 import uk.co.agware.filter.util.FilterUtil;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -25,10 +22,10 @@ public class FilterService {
 
     private PropertyFilter propertyFilter;
     private FilterRepository repository;
-    private String[] packagesToScan;
+    private Set<String> packagesToScan;
     private Map<String, String> staticGroupAllocation;
 
-    public FilterService(PropertyFilter propertyFilter, FilterRepository repository, String[] packagesToScan, Map<String, String> staticGroupAllocation) {
+    FilterService(PropertyFilter propertyFilter, FilterRepository repository, Set<String> packagesToScan, Map<String, String> staticGroupAllocation) {
         this.propertyFilter = propertyFilter;
         this.repository = repository;
         this.packagesToScan = packagesToScan;
@@ -39,7 +36,7 @@ public class FilterService {
         List<Group> groups = repository.initGroups();
         List<Access> allClasses = new ArrayList<>();
         for(String s : packagesToScan){
-            allClasses.addAll(propertyFilter.getFilterUtil().getFullAccessList(s));
+            allClasses.addAll(FilterUtil.nullSafe(propertyFilter.getFilterUtil().getFullAccessList(s)));
         }
         // For each saved group, check for updates to the access objects and then re-save
         FilterUtil.nullSafe(groups).forEach(group -> {
@@ -49,7 +46,7 @@ public class FilterService {
             repository.save(group);
         });
         // Add all extra ignored classes to the property filter's list
-        Arrays.stream(packagesToScan).forEach(s ->
+        packagesToScan.forEach(s ->
                 propertyFilter.getFilterUtil().getAllIgnoredClasses(s).forEach(c ->
                         propertyFilter.addIgnoredClass(c)
                 )

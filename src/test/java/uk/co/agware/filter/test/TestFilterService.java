@@ -15,6 +15,7 @@ import uk.co.agware.filter.impl.GroupImpl;
 import uk.co.agware.filter.impl.PermissionImpl;
 import uk.co.agware.filter.persistence.FilterRepository;
 import uk.co.agware.filter.service.FilterService;
+import uk.co.agware.filter.service.ServiceBuilder;
 import uk.co.agware.filter.test.classes.IgnoredClass;
 import uk.co.agware.filter.test.classes.SecondTestClass;
 import uk.co.agware.filter.test.classes.TestClass;
@@ -34,7 +35,6 @@ public class TestFilterService extends Mockito {
     private PropertyFilter propertyFilter;
     private FilterRepository filterRepository;
     private static FilterService filterService;
-    private Map<String, String> extraGroupMappings;
 
     @Before
     public void setUp(){
@@ -47,10 +47,14 @@ public class TestFilterService extends Mockito {
         when(filterRepository.initGroups()).thenReturn(Collections.singletonList(getTestGroup()));
         when(filterRepository.getGroups()).thenReturn(Collections.singletonList(getTestGroup()));
 
-        extraGroupMappings = new HashMap<>();
+        Map<String, String> extraGroupMappings = new HashMap<>();
         extraGroupMappings.put("user 1", "group 1");
 
-        filterService = new FilterService(propertyFilter, filterRepository, new String[]{"uk.co.agware.filter.test"}, extraGroupMappings);
+        filterService = new ServiceBuilder(propertyFilter)
+                .withRepository(filterRepository)
+                .addPackageToScan("uk.co.agware.filter.test")
+                .addStaticGroupAllocations(extraGroupMappings)
+                .build();
     }
 
     @Test
