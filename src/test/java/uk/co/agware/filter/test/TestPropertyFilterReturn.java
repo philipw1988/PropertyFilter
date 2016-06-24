@@ -4,10 +4,12 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import uk.co.agware.filter.PropertyFilter;
+import uk.co.agware.filter.data.AccessType;
+import uk.co.agware.filter.data.IAccess;
+import uk.co.agware.filter.data.PermissionType;
 import uk.co.agware.filter.exceptions.PropertyFilterException;
-import uk.co.agware.filter.objects.Access;
-import uk.co.agware.filter.objects.Group;
-import uk.co.agware.filter.objects.Permission;
+import uk.co.agware.filter.impl.DefaultClassFactory;
+import uk.co.agware.filter.impl.GroupImpl;
 import uk.co.agware.filter.test.classes.SecondTestClass;
 import uk.co.agware.filter.test.classes.TestClass;
 import uk.co.agware.filter.util.FilterUtil;
@@ -45,6 +47,7 @@ public class TestPropertyFilterReturn {
     private Integer secondTestInt3 = 22;
 
     private PropertyFilter propertyFilter;
+    private FilterUtil filterUtil;
     private String username = "test";
     private String groupName = "Test Group";
 
@@ -63,15 +66,17 @@ public class TestPropertyFilterReturn {
         testClass.setTestBD(testBD1);
         testClass.setSecondTestClasses(secondTestClasses);
         testClass.setStringList(new ArrayList<>(Arrays.asList(listString1, listString2, listString3)));
+
+        filterUtil = new FilterUtil(new DefaultClassFactory());
     }
 
     @Test
     public void testReturnNoAccess() throws PropertyFilterException {
-        propertyFilter = new PropertyFilter();
-        FilterUtil.setDefaultAccessType(Access.Type.NO_ACCESS);
-        FilterUtil.setDefaultPermissionType(Permission.Type.NO_ACCESS);
-        List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
-        Group group = new Group();
+        propertyFilter = new PropertyFilter(filterUtil);
+        filterUtil.setDefaultAccessType(AccessType.NO_ACCESS);
+        filterUtil.setDefaultPermissionType(PermissionType.NO_ACCESS);
+        List<IAccess> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        GroupImpl group = new GroupImpl();
         group.setName(groupName);
         group.setAccess(accessList);
         group.setMembers(Collections.singletonList(username));
@@ -83,11 +88,11 @@ public class TestPropertyFilterReturn {
 
     @Test
     public void testReturnNoAccessWritePermission() throws PropertyFilterException {
-        propertyFilter = new PropertyFilter();
-        FilterUtil.setDefaultAccessType(Access.Type.NO_ACCESS);
-        FilterUtil.setDefaultPermissionType(Permission.Type.WRITE);
-        List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
-        Group group = new Group();
+        propertyFilter = new PropertyFilter(filterUtil);
+        filterUtil.setDefaultAccessType(AccessType.NO_ACCESS);
+        filterUtil.setDefaultPermissionType(PermissionType.WRITE);
+        List<IAccess> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        GroupImpl group = new GroupImpl();
         group.setName(groupName);
         group.setAccess(accessList);
         group.setMembers(Collections.singletonList(username));
@@ -99,11 +104,11 @@ public class TestPropertyFilterReturn {
 
     @Test
     public void testReturnReadAccessNoPermission() throws PropertyFilterException {
-        propertyFilter = new PropertyFilter();
-        FilterUtil.setDefaultAccessType(Access.Type.READ);
-        FilterUtil.setDefaultPermissionType(Permission.Type.NO_ACCESS);
-        List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
-        Group group = new Group();
+        propertyFilter = new PropertyFilter(filterUtil);
+        filterUtil.setDefaultAccessType(AccessType.READ);
+        filterUtil.setDefaultPermissionType(PermissionType.NO_ACCESS);
+        List<IAccess> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        GroupImpl group = new GroupImpl();
         group.setName(groupName);
         group.setAccess(accessList);
         group.setMembers(Collections.singletonList(username));
@@ -118,11 +123,11 @@ public class TestPropertyFilterReturn {
 
     @Test
     public void testReturnReadAccessReadPermission() throws PropertyFilterException {
-        propertyFilter = new PropertyFilter();
-        FilterUtil.setDefaultAccessType(Access.Type.READ);
-        FilterUtil.setDefaultPermissionType(Permission.Type.READ);
-        List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
-        Group group = new Group();
+        propertyFilter = new PropertyFilter(filterUtil);
+        filterUtil.setDefaultAccessType(AccessType.READ);
+        filterUtil.setDefaultPermissionType(PermissionType.READ);
+        List<IAccess> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        GroupImpl group = new GroupImpl();
         group.setName(groupName);
         group.setAccess(accessList);
         group.setMembers(Collections.singletonList(username));
@@ -138,11 +143,11 @@ public class TestPropertyFilterReturn {
 
     @Test(expected = PropertyFilterException.class)
     public void testUserHasNoGroup() throws PropertyFilterException {
-        propertyFilter = new PropertyFilter();
-        FilterUtil.setDefaultAccessType(Access.Type.READ);
-        FilterUtil.setDefaultPermissionType(Permission.Type.READ);
-        List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
-        Group group = new Group();
+        propertyFilter = new PropertyFilter(filterUtil);
+        filterUtil.setDefaultAccessType(AccessType.READ);
+        filterUtil.setDefaultPermissionType(PermissionType.READ);
+        List<IAccess> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        GroupImpl group = new GroupImpl();
         group.setName(groupName);
         group.setAccess(accessList);
         group.setMembers(Collections.singletonList(username));
@@ -153,11 +158,11 @@ public class TestPropertyFilterReturn {
 
     @Test(expected = PropertyFilterException.class)
     public void testUnknownGroupName() throws PropertyFilterException {
-        propertyFilter = new PropertyFilter();
-        FilterUtil.setDefaultAccessType(Access.Type.READ);
-        FilterUtil.setDefaultPermissionType(Permission.Type.READ);
-        List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
-        Group group = new Group();
+        propertyFilter = new PropertyFilter(filterUtil);
+        filterUtil.setDefaultAccessType(AccessType.READ);
+        filterUtil.setDefaultPermissionType(PermissionType.READ);
+        List<IAccess> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        GroupImpl group = new GroupImpl();
         group.setName(groupName);
         group.setAccess(accessList);
         group.setMembers(Collections.singletonList(username));
@@ -169,12 +174,12 @@ public class TestPropertyFilterReturn {
     /* Even though the "secret" field is @NoAccess on SecondTestClass, it should be copied over since we're not filtering collections */
     @Test
     public void testIgnoreFilterCollection() throws PropertyFilterException {
-        propertyFilter = new PropertyFilter();
+        propertyFilter = new PropertyFilter(filterUtil);
         propertyFilter.filterCollectionsOnLoad(false);
-        FilterUtil.setDefaultAccessType(Access.Type.CREATE);
-        FilterUtil.setDefaultPermissionType(Permission.Type.WRITE);
-        List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
-        Group group = new Group();
+        filterUtil.setDefaultAccessType(AccessType.CREATE);
+        filterUtil.setDefaultPermissionType(PermissionType.WRITE);
+        List<IAccess> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        GroupImpl group = new GroupImpl();
         group.setName(groupName);
         group.setAccess(accessList);
         group.setMembers(Collections.singletonList(username));

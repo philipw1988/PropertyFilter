@@ -4,10 +4,14 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import uk.co.agware.filter.PropertyFilter;
+import uk.co.agware.filter.data.AccessType;
+import uk.co.agware.filter.data.IAccess;
+import uk.co.agware.filter.data.IPermission;
+import uk.co.agware.filter.data.PermissionType;
 import uk.co.agware.filter.exceptions.PropertyFilterException;
-import uk.co.agware.filter.objects.Access;
-import uk.co.agware.filter.objects.Group;
-import uk.co.agware.filter.objects.Permission;
+import uk.co.agware.filter.impl.AccessImpl;
+import uk.co.agware.filter.impl.DefaultClassFactory;
+import uk.co.agware.filter.impl.GroupImpl;
 import uk.co.agware.filter.test.classes.*;
 import uk.co.agware.filter.util.FilterUtil;
 
@@ -21,18 +25,20 @@ import java.util.Map;
 public class TestPropertyFilter {
 
     private PropertyFilter propertyFilter;
+    private FilterUtil filterUtil;
 
     private String username = "test";
     private String groupName = "Test Group";
 
     @Before
     public void setUp(){
-        propertyFilter = new PropertyFilter();
+        filterUtil = new FilterUtil(new DefaultClassFactory());
+        propertyFilter = new PropertyFilter(filterUtil);
 
-        FilterUtil.setDefaultAccessType(Access.Type.NO_ACCESS);
-        FilterUtil.setDefaultPermissionType(Permission.Type.NO_ACCESS);
-        List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
-        Group group = new Group();
+        filterUtil.setDefaultAccessType(AccessType.NO_ACCESS);
+        filterUtil.setDefaultPermissionType(PermissionType.NO_ACCESS);
+        List<IAccess> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        GroupImpl group = new GroupImpl();
         group.setName(groupName);
         group.setAccess(accessList);
         group.setMembers(Collections.singletonList(username));
@@ -70,7 +76,7 @@ public class TestPropertyFilter {
     @Test
     public void testLoad(){
         Assert.assertEquals(propertyFilter.getUsersGroup(username), groupName);
-        Map<String, Access> storedGroup = propertyFilter.getGroup(propertyFilter.getUsersGroup(username));
+        Map<String, IAccess> storedGroup = propertyFilter.getGroup(propertyFilter.getUsersGroup(username));
         Assert.assertEquals(5, storedGroup.keySet().size());
         Assert.assertTrue(storedGroup.keySet().contains(TestClass.class.getName()));
         Assert.assertTrue(storedGroup.keySet().contains(NoPublicConstructor.class.getName()));
@@ -81,17 +87,17 @@ public class TestPropertyFilter {
 
     @Test
     public void testGetAccess() throws PropertyFilterException {
-        Access access = propertyFilter.getAccess(TestClass.class, username);
-        Assert.assertEquals(new Access(TestClass.class.getName(), Access.Type.NO_ACCESS, true), access);
+        IAccess access = propertyFilter.getAccess(TestClass.class, username);
+        Assert.assertEquals(new AccessImpl(TestClass.class.getName(), AccessType.NO_ACCESS, true), access);
 
         access = propertyFilter.getAccess(SecondTestClass.class, username);
-        Assert.assertEquals(new Access(SecondTestClass.class.getName(), Access.Type.READ, false), access);
+        Assert.assertEquals(new AccessImpl(SecondTestClass.class.getName(), AccessType.READ, false), access);
 
         access = propertyFilter.getAccess(NoPublicConstructor.class, username);
-        Assert.assertEquals(new Access(NoPublicConstructor.class.getName(), Access.Type.CREATE, false), access);
+        Assert.assertEquals(new AccessImpl(NoPublicConstructor.class.getName(), AccessType.CREATE, false), access);
 
         access = propertyFilter.getAccess(NoDefaultConstructor.class, username);
-        Assert.assertEquals(new Access(NoDefaultConstructor.class.getName(), Access.Type.UPDATE, false), access);
+        Assert.assertEquals(new AccessImpl(NoDefaultConstructor.class.getName(), AccessType.UPDATE, false), access);
     }
 
     @Test
@@ -101,9 +107,9 @@ public class TestPropertyFilter {
 
     @Test
     public void testGetAccessibleClassesFromGroup(){
-        FilterUtil.setDefaultAccessType(Access.Type.CREATE);
-        List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
-        Group group = new Group();
+        filterUtil.setDefaultAccessType(AccessType.CREATE);
+        List<IAccess> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        GroupImpl group = new GroupImpl();
         group.setName(groupName);
         group.setAccess(accessList);
         group.setMembers(Collections.singletonList(username));
@@ -116,7 +122,7 @@ public class TestPropertyFilter {
 
     @Test
     public void testGetAccessibleFieldsFromObject(){
-        List<Permission> permissions = propertyFilter.getAccessibleFields(new TestClass(), username);
+        List<IPermission> permissions = propertyFilter.getAccessibleFields(new TestClass(), username);
         Assert.assertEquals(1, permissions.size());
         permissions = propertyFilter.getAccessibleFields(new SecondTestClass(), username);
         Assert.assertEquals(1, permissions.size());
@@ -124,7 +130,7 @@ public class TestPropertyFilter {
 
     @Test
     public void testGetAccessibleFieldsFromClass(){
-        List<Permission> permissions = propertyFilter.getAccessibleFields(TestClass.class, username);
+        List<IPermission> permissions = propertyFilter.getAccessibleFields(TestClass.class, username);
         Assert.assertEquals(1, permissions.size());
         permissions = propertyFilter.getAccessibleFields(SecondTestClass.class, username);
         Assert.assertEquals(1, permissions.size());
@@ -132,7 +138,7 @@ public class TestPropertyFilter {
 
     @Test
     public void testGetAccessibleFieldsFromClassName(){
-        List<Permission> permissions = propertyFilter.getAccessibleFields(TestClass.class.getName(), username);
+        List<IPermission> permissions = propertyFilter.getAccessibleFields(TestClass.class.getName(), username);
         Assert.assertEquals(1, permissions.size());
         permissions = propertyFilter.getAccessibleFields(SecondTestClass.class.getName(), username);
         Assert.assertEquals(1, permissions.size());
@@ -140,7 +146,7 @@ public class TestPropertyFilter {
 
     @Test
     public void testGetAccessibleFieldsFromDisplayName(){
-        List<Permission> permissions = propertyFilter.getAccessibleFields("Test Class", username);
+        List<IPermission> permissions = propertyFilter.getAccessibleFields("Test Class", username);
         Assert.assertEquals(1, permissions.size());
         permissions = propertyFilter.getAccessibleFields(SecondTestClass.class.getName(), username);
         Assert.assertEquals(1, permissions.size());
@@ -149,7 +155,7 @@ public class TestPropertyFilter {
     @Test
     public void testGetAccessibleFieldsFromGroup(){
         String groupName = propertyFilter.getUsersGroup(username);
-        List<Permission> permissions = propertyFilter.getAccessibleFieldsForGroup(TestClass.class, groupName);
+        List<IPermission> permissions = propertyFilter.getAccessibleFieldsForGroup(TestClass.class, groupName);
         Assert.assertEquals(1, permissions.size());
         permissions = propertyFilter.getAccessibleFieldsForGroup(TestClass.class.getName(), groupName);
         Assert.assertEquals(1, permissions.size());
@@ -159,43 +165,43 @@ public class TestPropertyFilter {
 
     @Test
     public void testGetAccessFromObject() throws PropertyFilterException {
-        Access access = propertyFilter.getAccess(new TestClass(), username);
+        IAccess access = propertyFilter.getAccess(new TestClass(), username);
         Assert.assertEquals(TestClass.class.getName(), access.getObjectClass());
     }
 
     @Test
     public void testGetAccessFromClass() throws PropertyFilterException {
-        Access access = propertyFilter.getAccess(TestClass.class, username);
+        IAccess access = propertyFilter.getAccess(TestClass.class, username);
         Assert.assertEquals(TestClass.class.getName(), access.getObjectClass());
     }
 
     @Test
     public void testGetAccessFromClassName() throws PropertyFilterException {
-        Access access = propertyFilter.getAccess(TestClass.class.getName(), username);
+        IAccess access = propertyFilter.getAccess(TestClass.class.getName(), username);
         Assert.assertEquals(TestClass.class.getName(), access.getObjectClass());
     }
 
     @Test
     public void testGetAccessFromDisplayName() throws PropertyFilterException {
-        Access access = propertyFilter.getAccess("Test Class", username);
+        IAccess access = propertyFilter.getAccess("Test Class", username);
         Assert.assertEquals(TestClass.class.getName(), access.getObjectClass());
     }
 
     @Test
     public void testGetAccessFromObjectFromGroup() throws PropertyFilterException {
-        Access access = propertyFilter.getAccessForGroup(new TestClass(), propertyFilter.getUsersGroup(username));
+        IAccess access = propertyFilter.getAccessForGroup(new TestClass(), propertyFilter.getUsersGroup(username));
         Assert.assertEquals(TestClass.class.getName(), access.getObjectClass());
     }
 
     @Test
     public void testGetAccessFromClassFromGroup() throws PropertyFilterException {
-        Access access = propertyFilter.getAccessForGroup(TestClass.class, propertyFilter.getUsersGroup(username));
+        IAccess access = propertyFilter.getAccessForGroup(TestClass.class, propertyFilter.getUsersGroup(username));
         Assert.assertEquals(TestClass.class.getName(), access.getObjectClass());
     }
 
     @Test
     public void testGetAccessFromClassNameFromGroup() throws PropertyFilterException {
-        Access access = propertyFilter.getAccessForGroup(TestClass.class.getName(), propertyFilter.getUsersGroup(username));
+        IAccess access = propertyFilter.getAccessForGroup(TestClass.class.getName(), propertyFilter.getUsersGroup(username));
         Assert.assertEquals(TestClass.class.getName(), access.getObjectClass());
     }
 

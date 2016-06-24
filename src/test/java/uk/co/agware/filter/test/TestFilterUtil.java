@@ -4,9 +4,13 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import uk.co.agware.filter.data.AccessType;
+import uk.co.agware.filter.data.IAccess;
+import uk.co.agware.filter.data.PermissionType;
 import uk.co.agware.filter.exceptions.FilterException;
-import uk.co.agware.filter.objects.Access;
-import uk.co.agware.filter.objects.Permission;
+import uk.co.agware.filter.impl.AccessImpl;
+import uk.co.agware.filter.impl.DefaultClassFactory;
+import uk.co.agware.filter.impl.PermissionImpl;
 import uk.co.agware.filter.test.classes.*;
 import uk.co.agware.filter.util.FilterUtil;
 
@@ -20,33 +24,35 @@ import java.util.Set;
  */
 public class TestFilterUtil {
 
-    private static Access readWriteAccessTest;
+    private static AccessImpl readWriteAccessTest;
+    private FilterUtil filterUtil;
 
     @BeforeClass
     public static void setUpBeforeClass(){
-        List<Permission> permissions = new ArrayList<>();
-        Permission readPermission = new Permission();
+        List<PermissionImpl> permissions = new ArrayList<>();
+        PermissionImpl readPermission = new PermissionImpl();
         readPermission.setPropertyName("testString");
-        readPermission.setPermission(Permission.Type.READ);
+        readPermission.setPermission(PermissionType.READ);
         permissions.add(readPermission);
-        Permission writePermission = new Permission();
-        writePermission.setPermission(Permission.Type.WRITE);
+        PermissionImpl writePermission = new PermissionImpl();
+        writePermission.setPermission(PermissionType.WRITE);
         writePermission.setPropertyName("testBD");
         permissions.add(writePermission);
-        Permission noAccessPermission = new Permission();
-        noAccessPermission.setPermission(Permission.Type.NO_ACCESS);
+        PermissionImpl noAccessPermission = new PermissionImpl();
+        noAccessPermission.setPermission(PermissionType.NO_ACCESS);
         noAccessPermission.setPropertyName("stringList");
         permissions.add(noAccessPermission);
 
-        readWriteAccessTest = new Access();
-        readWriteAccessTest.setAccess(Access.Type.CREATE);
+        readWriteAccessTest = new AccessImpl();
+        readWriteAccessTest.setAccess(AccessType.CREATE);
         readWriteAccessTest.setObjectClass("TestClass");
         readWriteAccessTest.setPermissions(permissions);
     }
 
     @Before
     public void setUp(){
-        FilterUtil.setDefaultAccessType(Access.Type.NO_ACCESS); // Just check we went back to default
+        filterUtil = new FilterUtil(new DefaultClassFactory());
+        filterUtil.setDefaultAccessType(AccessType.NO_ACCESS); // Just check we went back to default
     }
 
     @Test
@@ -77,133 +83,133 @@ public class TestFilterUtil {
 
     @Test
     public void testFieldReadable(){
-        Assert.assertTrue(FilterUtil.isFieldReadable("testString", readWriteAccessTest));
-        Assert.assertTrue(FilterUtil.isFieldReadable("testBD", readWriteAccessTest));
-        Assert.assertFalse(FilterUtil.isFieldReadable("stringList", readWriteAccessTest));
+        Assert.assertTrue(filterUtil.isFieldReadable("testString", readWriteAccessTest));
+        Assert.assertTrue(filterUtil.isFieldReadable("testBD", readWriteAccessTest));
+        Assert.assertFalse(filterUtil.isFieldReadable("stringList", readWriteAccessTest));
     }
 
     @Test(expected = FilterException.class)
     public void testNonDefinedReadPermission(){
-        Assert.assertNull(FilterUtil.isFieldReadable("notARealFiled", readWriteAccessTest));
+        Assert.assertNull(filterUtil.isFieldReadable("notARealFiled", readWriteAccessTest));
     }
 
     @Test
     public void testFieldWritable(){
-        Assert.assertTrue(FilterUtil.isFieldWritable("testBD", readWriteAccessTest));
-        Assert.assertFalse(FilterUtil.isFieldWritable("testString", readWriteAccessTest));
-        Assert.assertFalse(FilterUtil.isFieldWritable("stringList", readWriteAccessTest));
+        Assert.assertTrue(filterUtil.isFieldWritable("testBD", readWriteAccessTest));
+        Assert.assertFalse(filterUtil.isFieldWritable("testString", readWriteAccessTest));
+        Assert.assertFalse(filterUtil.isFieldWritable("stringList", readWriteAccessTest));
     }
 
     @Test(expected = FilterException.class)
     public void testNonDefinedWritePermission(){
-        Assert.assertNull(FilterUtil.isFieldWritable("notARealFiled", readWriteAccessTest));
+        Assert.assertNull(filterUtil.isFieldWritable("notARealFiled", readWriteAccessTest));
     }
 
     @Test
     public void testGetAllFieldsFromClass(){
-        Set<Field> fields = FilterUtil.getAllFields(TestClass.class);
+        Set<Field> fields = filterUtil.getAllFields(TestClass.class);
         Assert.assertTrue(fields.size() == 4);
     }
 
     @Test
     public void testGetAllFieldsFromObject(){
-        Set<Field> fields = FilterUtil.getAllFields(new TestClass());
+        Set<Field> fields = filterUtil.getAllFields(new TestClass());
         Assert.assertTrue(fields.size() == 4);
     }
 
     @Test
     public void testGetAllClasses(){
-        List<Class> classes = FilterUtil.getAllClasses("uk.co.agware.filter.test.classes");
+        List<Class> classes = filterUtil.getAllClasses("uk.co.agware.filter.test.classes");
         Assert.assertEquals(7, classes.size());
-        List<Class> availableClasses = FilterUtil.getAllAvailableClasses(classes);
+        List<Class> availableClasses = filterUtil.getAllAvailableClasses(classes);
         Assert.assertEquals(5, availableClasses.size());
     }
 
     @Test
     public void testGetAllIgnoredClasses(){
-        List<Class> classes = FilterUtil.getAllIgnoredClasses("uk.co.agware.filter.test.classes");
+        List<Class> classes = filterUtil.getAllIgnoredClasses("uk.co.agware.filter.test.classes");
         Assert.assertEquals(1, classes.size());
         Assert.assertTrue(classes.contains(IgnoredClass.class));
     }
 
     @Test
     public void testGetAllAvailableObjects(){
-        List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        List<IAccess> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
         Assert.assertEquals(5, accessList.size());
     }
 
     @Test
     public void testBuildBaseAccessForClassNoAccess(){
-        FilterUtil.setDefaultAccessType(Access.Type.NO_ACCESS);
-        Access access = FilterUtil.buildBaseAccess(TestClass.class);
+        filterUtil.setDefaultAccessType(AccessType.NO_ACCESS);
+        IAccess access = filterUtil.buildBaseAccess(TestClass.class);
         Assert.assertTrue(access.isModifiable());
-        Assert.assertEquals(Access.Type.NO_ACCESS, access.getAccess());
-        access = FilterUtil.buildBaseAccess(NoAccessClass.class);
-        Assert.assertEquals(Access.Type.NO_ACCESS, access.getAccess());
+        Assert.assertEquals(AccessType.NO_ACCESS, access.getAccess());
+        access = filterUtil.buildBaseAccess(NoAccessClass.class);
+        Assert.assertEquals(AccessType.NO_ACCESS, access.getAccess());
         Assert.assertFalse(access.isModifiable());
     }
 
     @Test
     public void testBuildBaseAccessForClassCreate(){
-        FilterUtil.setDefaultAccessType(Access.Type.CREATE);
-        Access access = FilterUtil.buildBaseAccess(TestClass.class);
-        Assert.assertEquals(Access.Type.CREATE, access.getAccess());
+        filterUtil.setDefaultAccessType(AccessType.CREATE);
+        IAccess access = filterUtil.buildBaseAccess(TestClass.class);
+        Assert.assertEquals(AccessType.CREATE, access.getAccess());
         Assert.assertTrue(access.isModifiable());
-        access = FilterUtil.buildBaseAccess(NoAccessClass.class);
-        Assert.assertEquals(Access.Type.NO_ACCESS, access.getAccess());
+        access = filterUtil.buildBaseAccess(NoAccessClass.class);
+        Assert.assertEquals(AccessType.NO_ACCESS, access.getAccess());
         Assert.assertFalse(access.isModifiable());
     }
 
     @Test
     public void testBuildBaseAccessForClassRead(){
-        FilterUtil.setDefaultAccessType(Access.Type.READ);
-        Access access = FilterUtil.buildBaseAccess(TestClass.class);
+        filterUtil.setDefaultAccessType(AccessType.READ);
+        IAccess access = filterUtil.buildBaseAccess(TestClass.class);
         Assert.assertTrue(access.isModifiable());
-        Assert.assertEquals(Access.Type.READ, access.getAccess());
-        access = FilterUtil.buildBaseAccess(NoAccessClass.class);
-        Assert.assertEquals(Access.Type.NO_ACCESS, access.getAccess());
+        Assert.assertEquals(AccessType.READ, access.getAccess());
+        access = filterUtil.buildBaseAccess(NoAccessClass.class);
+        Assert.assertEquals(AccessType.NO_ACCESS, access.getAccess());
         Assert.assertFalse(access.isModifiable());
     }
 
     @Test
     public void testBuildBaseAccessForClassUpdate(){
-        FilterUtil.setDefaultAccessType(Access.Type.UPDATE);
-        Access access = FilterUtil.buildBaseAccess(TestClass.class);
+        filterUtil.setDefaultAccessType(AccessType.UPDATE);
+        IAccess access = filterUtil.buildBaseAccess(TestClass.class);
         Assert.assertTrue(access.isModifiable());
-        Assert.assertEquals(Access.Type.UPDATE, access.getAccess());
-        access = FilterUtil.buildBaseAccess(NoAccessClass.class);
-        Assert.assertEquals(Access.Type.NO_ACCESS, access.getAccess());
+        Assert.assertEquals(AccessType.UPDATE, access.getAccess());
+        access = filterUtil.buildBaseAccess(NoAccessClass.class);
+        Assert.assertEquals(AccessType.NO_ACCESS, access.getAccess());
         Assert.assertFalse(access.isModifiable());
     }
 
     @Test
     public void testPermissionAnnotationsWithNoAccess(){
-        FilterUtil.setDefaultPermissionType(Permission.Type.NO_ACCESS);
-        Access access = FilterUtil.createDefaultAccessFromClass(NoAccessClass.class);
-        Assert.assertTrue(access.getPermissions().contains(new Permission("id", Permission.Type.NO_ACCESS, false)));
-        Assert.assertTrue(access.getPermissions().contains(new Permission("name", Permission.Type.READ, false)));
-        Assert.assertTrue(access.getPermissions().contains(new Permission("email", Permission.Type.WRITE, false)));
-        Assert.assertTrue(access.getPermissions().contains(new Permission("other", Permission.Type.NO_ACCESS, true)));
+        filterUtil.setDefaultPermissionType(PermissionType.NO_ACCESS);
+        IAccess access = filterUtil.createDefaultAccessFromClass(NoAccessClass.class);
+        Assert.assertTrue(access.getPermissions().contains(new PermissionImpl("id", PermissionType.NO_ACCESS, false)));
+        Assert.assertTrue(access.getPermissions().contains(new PermissionImpl("name", PermissionType.READ, false)));
+        Assert.assertTrue(access.getPermissions().contains(new PermissionImpl("email", PermissionType.WRITE, false)));
+        Assert.assertTrue(access.getPermissions().contains(new PermissionImpl("other", PermissionType.NO_ACCESS, true)));
     }
 
     @Test
     public void testPermissionAnnotationsWithRead(){
-        FilterUtil.setDefaultPermissionType(Permission.Type.READ);
-        Access access = FilterUtil.createDefaultAccessFromClass(NoAccessClass.class);
-        Assert.assertTrue(access.getPermissions().contains(new Permission("id", Permission.Type.NO_ACCESS, false)));
-        Assert.assertTrue(access.getPermissions().contains(new Permission("name", Permission.Type.READ, false)));
-        Assert.assertTrue(access.getPermissions().contains(new Permission("email", Permission.Type.WRITE, false)));
-        Assert.assertTrue(access.getPermissions().contains(new Permission("other", Permission.Type.READ, true)));
+        filterUtil.setDefaultPermissionType(PermissionType.READ);
+        IAccess access = filterUtil.createDefaultAccessFromClass(NoAccessClass.class);
+        Assert.assertTrue(access.getPermissions().contains(new PermissionImpl("id", PermissionType.NO_ACCESS, false)));
+        Assert.assertTrue(access.getPermissions().contains(new PermissionImpl("name", PermissionType.READ, false)));
+        Assert.assertTrue(access.getPermissions().contains(new PermissionImpl("email", PermissionType.WRITE, false)));
+        Assert.assertTrue(access.getPermissions().contains(new PermissionImpl("other", PermissionType.READ, true)));
     }
 
     @Test
     public void testPermissionAnnotationsWithWrite(){
-        FilterUtil.setDefaultPermissionType(Permission.Type.WRITE);
-        Access access = FilterUtil.createDefaultAccessFromClass(NoAccessClass.class);
-        Assert.assertTrue(access.getPermissions().contains(new Permission("id", Permission.Type.NO_ACCESS, false)));
-        Assert.assertTrue(access.getPermissions().contains(new Permission("name", Permission.Type.READ, false)));
-        Assert.assertTrue(access.getPermissions().contains(new Permission("email", Permission.Type.WRITE, false)));
-        Assert.assertTrue(access.getPermissions().contains(new Permission("other", Permission.Type.WRITE, true)));
+        filterUtil.setDefaultPermissionType(PermissionType.WRITE);
+        IAccess access = filterUtil.createDefaultAccessFromClass(NoAccessClass.class);
+        Assert.assertTrue(access.getPermissions().contains(new PermissionImpl("id", PermissionType.NO_ACCESS, false)));
+        Assert.assertTrue(access.getPermissions().contains(new PermissionImpl("name", PermissionType.READ, false)));
+        Assert.assertTrue(access.getPermissions().contains(new PermissionImpl("email", PermissionType.WRITE, false)));
+        Assert.assertTrue(access.getPermissions().contains(new PermissionImpl("other", PermissionType.WRITE, true)));
     }
 
     @Test
@@ -226,25 +232,25 @@ public class TestFilterUtil {
 
     @Test
     public void testBuildNoAccessFromClass(){
-        Access access = FilterUtil.buildBaseAccess(NoAccessClass.class);
-        Assert.assertEquals(Access.Type.NO_ACCESS, access.getAccess());
+        IAccess access = filterUtil.buildBaseAccess(NoAccessClass.class);
+        Assert.assertEquals(AccessType.NO_ACCESS, access.getAccess());
         Assert.assertFalse(access.isModifiable());
     }
 
     @Test(expected = FilterException.class)
     public void testFailWhenNoAnnotation(){
-        FilterUtil.buildBaseAccess(ThrowsErrorDuringConstruct.class);
+        filterUtil.buildBaseAccess(ThrowsErrorDuringConstruct.class);
     }
 
     @Test
     public void testDisplayName(){
-        Access access = FilterUtil.buildBaseAccess(TestClass.class);
+        IAccess access = filterUtil.buildBaseAccess(TestClass.class);
         Assert.assertEquals("Test Class", access.getDisplayName());
     }
 
     @Test
     public void testDefaultDisplayName(){
-        Access access = FilterUtil.buildBaseAccess(NoAccessClass.class);
+        IAccess access = filterUtil.buildBaseAccess(NoAccessClass.class);
         Assert.assertEquals(NoAccessClass.class.getName(), access.getDisplayName());
     }
 }
