@@ -219,6 +219,26 @@ public class TestPropertyFilterSave {
     }
 
     @Test
+    public void testSaveWithNullExistingCollection() throws PropertyFilterException, IllegalAccessException {
+        FilterUtil.setDefaultAccessType(Access.Type.CREATE);
+        FilterUtil.setDefaultPermissionType(Permission.Type.WRITE);
+        List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        Group group = new Group();
+        group.setName(groupName);
+        group.setAccess(accessList);
+        group.setMembers(Collections.singletonList(username));
+        propertyFilter.setGroups(Collections.singletonList(group));
+
+        TestClass tc = new TestClass();
+        tc.setId("1");
+        tc.setTestBD(new BigDecimal(12));
+
+        propertyFilter.parseObjectForSaving(testClass, tc, username);
+
+        Assert.assertEquals(3, tc.getSecondTestClasses().size());
+    }
+
+    @Test
     public void testNoDefinedAccess() throws IllegalAccessException, PropertyFilterException {
         FilterUtil.setDefaultAccessType(Access.Type.CREATE);
         FilterUtil.setDefaultPermissionType(Permission.Type.WRITE);

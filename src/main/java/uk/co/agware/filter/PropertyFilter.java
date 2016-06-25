@@ -337,6 +337,10 @@ public class PropertyFilter {
                             Collection existingCollection = (Collection) pd.getReadMethod().invoke(existingObject);
                             // Parse the collection and get one containing all the new values
                             Collection resultingCollection = handleCollectionsForSaving(existingCollection, newCollection, username, groupName);
+                            if(existingCollection == null){ // If the collection was null then we need to instantiate it
+                                existingCollection = FilterUtil.instantiateCollection(f.getClass());
+                                pd.getWriteMethod().invoke(existingObject, existingCollection);
+                            }
                             // Clear the current contents of the collection and add all the results of the filtering
                             existingCollection.clear();
                             existingCollection.addAll(resultingCollection);
