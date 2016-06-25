@@ -3,7 +3,7 @@ package uk.co.agware.filter.impl;
 import uk.co.agware.filter.data.Group;
 import uk.co.agware.filter.persistence.FilterRepository;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -20,12 +20,12 @@ public class PseudoRepository implements FilterRepository {
 
     @Override
     public <T extends Group> List<T> getGroups() {
-        return Collections.emptyList();
+        return new ArrayList<>();
     }
 
     @Override
     public <T extends Group> List<T> initGroups() {
-        return Collections.emptyList();
+        return new ArrayList<>();
     }
 
     @Override

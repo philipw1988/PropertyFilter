@@ -24,12 +24,14 @@ public class FilterService {
     private FilterRepository repository;
     private Set<String> packagesToScan;
     private Map<String, String> staticGroupAllocation;
+    private List<Group> runTimeGroups;
 
-    FilterService(PropertyFilter propertyFilter, FilterRepository repository, Set<String> packagesToScan, Map<String, String> staticGroupAllocation) {
+    FilterService(PropertyFilter propertyFilter, FilterRepository repository, Set<String> packagesToScan, Map<String, String> staticGroupAllocation, List<Group> runTimeGroups) {
         this.propertyFilter = propertyFilter;
         this.repository = repository;
         this.packagesToScan = packagesToScan;
         this.staticGroupAllocation = staticGroupAllocation;
+        this.runTimeGroups = runTimeGroups;
     }
 
     public void init(){
@@ -131,6 +133,7 @@ public class FilterService {
     }
 
     private void setGroups(List<Group> groups){
+        groups.addAll(runTimeGroups); // Add in the runtime specified groups as well
         propertyFilter.setGroups(groups);
         // Add the static allocations into the group map, this is mainly for either overrides, or virtual users such as system users that might need a group
         staticGroupAllocation.entrySet().forEach(e -> propertyFilter.addUserToGroup(e.getKey(), e.getValue()));

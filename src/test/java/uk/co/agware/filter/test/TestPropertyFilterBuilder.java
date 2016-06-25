@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import uk.co.agware.filter.PropertyFilter;
 import uk.co.agware.filter.PropertyFilterBuilder;
+import uk.co.agware.filter.impl.DefaultClassFactory;
 import uk.co.agware.filter.test.classes.IgnoredClass;
 import uk.co.agware.filter.test.classes.TestClass;
 import uk.co.agware.filter.util.FilterUtil;
@@ -15,9 +16,12 @@ import java.util.Arrays;
  */
 public class TestPropertyFilterBuilder {
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testNullUtil(){
-        new PropertyFilterBuilder().build();
+    @Test
+    public void testNoUtil(){
+        PropertyFilter propertyFilter = new PropertyFilterBuilder().build();
+        Assert.assertNotNull(propertyFilter.getFilterUtil());
+        Assert.assertNotNull(propertyFilter.getFilterUtil().getClassFactory());
+        Assert.assertTrue(propertyFilter.getFilterUtil().getClassFactory() instanceof DefaultClassFactory);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package uk.co.agware.filter;
 
+import uk.co.agware.filter.impl.DefaultClassFactory;
 import uk.co.agware.filter.util.FilterUtil;
 
 import java.util.ArrayList;
@@ -12,7 +13,7 @@ import java.util.stream.Collectors;
 public class PropertyFilterBuilder {
 
     private List<Class> ignoredClasses = new ArrayList<>();
-    private FilterUtil filterUtil = null;
+    private FilterUtil filterUtil = new FilterUtil(new DefaultClassFactory());
     private boolean filterCollectionsOnSave = true;
     private boolean filterCollectionsOnLoad = true;
 
@@ -46,9 +47,6 @@ public class PropertyFilterBuilder {
     }
 
     public PropertyFilter build(){
-        if(filterUtil == null){
-            throw new IllegalArgumentException("Property Filter cannot be null");
-        }
         PropertyFilter propertyFilter = new PropertyFilter(filterUtil);
         propertyFilter.filterCollectionsOnSave(filterCollectionsOnSave);
         propertyFilter.filterCollectionsOnLoad(filterCollectionsOnLoad);
