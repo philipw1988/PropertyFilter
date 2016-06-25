@@ -328,7 +328,7 @@ public class PropertyFilter {
                         }
                     }
                     else {
-                        if(newValue == null){ // Null collection can be ignored
+                        if(newValue == null){ // Null collection can be ignored and just added as is
                             pd.getWriteMethod().invoke(existingObject, newValue);
                         }
                         else {
@@ -338,7 +338,7 @@ public class PropertyFilter {
                             // Parse the collection and get one containing all the new values
                             Collection resultingCollection = handleCollectionsForSaving(existingCollection, newCollection, username, groupName);
                             if(existingCollection == null){ // If the collection was null then we need to instantiate it
-                                existingCollection = FilterUtil.instantiateCollection(f.getClass());
+                                existingCollection = FilterUtil.instantiateCollection(f.getType());
                                 pd.getWriteMethod().invoke(existingObject, existingCollection);
                             }
                             // Clear the current contents of the collection and add all the results of the filtering
