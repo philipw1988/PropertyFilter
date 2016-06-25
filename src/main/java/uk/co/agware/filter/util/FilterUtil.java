@@ -56,9 +56,9 @@ public class FilterUtil {
 
     public static Collection instantiateCollection(Class collection){
         if(Set.class.isAssignableFrom(collection)){
-            return Collections.emptySet();
+            return new HashSet();
         }
-        return Collections.emptyList();
+        return new ArrayList();
     }
 
     // Returns and empty list if the collection passed in is null

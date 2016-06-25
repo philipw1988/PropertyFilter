@@ -57,12 +57,19 @@ public class TestFilterUtil {
 
     @Test
     public void testInstantiateSet(){
-        Assert.assertNotNull(FilterUtil.instantiateObject(Set.class));
+        Set set = (Set) FilterUtil.instantiateObject(Set.class);
+        Assert.assertNotNull(set);
+        Assert.assertTrue(set.add("Hello"));
+        Assert.assertEquals(1, set.size());
     }
 
     @Test
     public void testInstantiateList(){
-        Assert.assertNotNull(FilterUtil.instantiateObject(List.class));
+        List list = (List) FilterUtil.instantiateObject(List.class);
+        Assert.assertNotNull(list);
+        Assert.assertNotNull(list);
+        Assert.assertTrue(list.add("Hello"));
+        Assert.assertEquals(1, list.size());
     }
 
     @Test
