@@ -29,7 +29,7 @@ public class PropertyFilter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PropertyFilter.class);
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
-    private final List<Class> ignoredClasses = new ArrayList<>(Arrays.asList(String.class, Integer.class, int.class, Double.class, double.class, Float.class, float.class, BigDecimal.class, Boolean.class, boolean.class, Byte.class, byte.class, Date.class, LocalDate.class, LocalDateTime.class, BigInteger.class, Long.class, long.class));
+    private final List<Class> ignoredClasses;
 
     private final BiMap<String, String> displayToClassNames = HashBiMap.create();
     private final Map<String, Map<String, Access>> groups = new HashMap<>();
@@ -306,6 +306,10 @@ public class PropertyFilter {
                             Collection existingCollection = (Collection) PropertyUtils.getProperty(existingObject, f.getName());
                             // Parse the collection and get one containing all the new values
                             Collection resultingCollection = handleCollectionsForSaving(existingCollection, newCollection, username, groupName);
+                            if(existingCollection == null){ // If the collection was null then we need to instantiate it
+                                existingCollection = FilterUtil.instantiateCollection(f.getType());
+                                pd.getWriteMethod().invoke(existingObject, existingCollection);
+                            }
                             // Clear the current contents of the collection and add all the results of the filtering
                             existingCollection.clear();
                             existingCollection.addAll(resultingCollection);

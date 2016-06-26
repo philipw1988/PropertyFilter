@@ -16,6 +16,7 @@ import uk.co.agware.filter.util.FilterUtil;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -58,6 +59,29 @@ public class TestFilterUtil {
     @Test
     public void testInstantiateObject(){
         Assert.assertNotNull(FilterUtil.instantiateObject(TestClass.class));
+    }
+
+    @Test
+    public void testInstantiateSet(){
+        Set set = (Set) FilterUtil.instantiateObject(Set.class);
+        Assert.assertNotNull(set);
+        Assert.assertTrue(set.add("Hello"));
+        Assert.assertEquals(1, set.size());
+    }
+
+    @Test
+    public void testInstantiateList(){
+        List list = (List) FilterUtil.instantiateObject(List.class);
+        Assert.assertNotNull(list);
+        Assert.assertNotNull(list);
+        Assert.assertTrue(list.add("Hello"));
+        Assert.assertEquals(1, list.size());
+    }
+
+    @Test
+    public void testInstantiateCollectionFromEmpty(){
+        Assert.assertNotNull(FilterUtil.instantiateObject(Collections.emptyList().getClass()));
+        Assert.assertNotNull(FilterUtil.instantiateObject(Collections.emptySet().getClass()));
     }
 
     @Test(expected = FilterException.class)
