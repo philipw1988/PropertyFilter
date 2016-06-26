@@ -41,6 +41,7 @@ public class PropertyFilter {
 
     PropertyFilter(FilterUtil filterUtil) {
         this.filterUtil = filterUtil;
+        this.ignoredClasses = new ArrayList<>(Arrays.asList(String.class, Integer.class, int.class, Double.class, double.class, Float.class, float.class, BigDecimal.class, Boolean.class, boolean.class, Byte.class, byte.class, Date.class, LocalDate.class, LocalDateTime.class, BigInteger.class, Long.class, long.class)); // Not efficient, but a lazy way to do it in one line
     }
 
     public FilterUtil getFilterUtil() {
@@ -308,7 +309,7 @@ public class PropertyFilter {
                             Collection resultingCollection = handleCollectionsForSaving(existingCollection, newCollection, username, groupName);
                             if(existingCollection == null){ // If the collection was null then we need to instantiate it
                                 existingCollection = FilterUtil.instantiateCollection(f.getType());
-                                pd.getWriteMethod().invoke(existingObject, existingCollection);
+                                PropertyUtils.setProperty(existingObject, f.getName(), existingCollection);
                             }
                             // Clear the current contents of the collection and add all the results of the filtering
                             existingCollection.clear();

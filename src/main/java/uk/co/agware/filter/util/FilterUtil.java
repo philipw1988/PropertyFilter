@@ -173,6 +173,9 @@ public class FilterUtil {
 
     /* Static Helper Methods */
     public static Object instantiateObject(Class clazz) {
+        if(Collection.class.isAssignableFrom(clazz)){
+            return instantiateCollection(clazz);
+        }
         try {
             MethodHandle methodHandle = MethodHandles.lookup().findConstructor(clazz, MethodType.methodType(void.class));
             return methodHandle.invoke();
@@ -183,6 +186,13 @@ public class FilterUtil {
         } catch (Throwable throwable) {
             throw new FilterException(String.format("Class %s threw an exception during instantiation of default constructor", clazz.getName()), throwable);
         }
+    }
+
+    public static Collection instantiateCollection(Class collection){
+        if(Set.class.isAssignableFrom(collection)){
+            return new HashSet();
+        }
+        return new ArrayList();
     }
 
     // Returns and empty list if the collection passed in is null

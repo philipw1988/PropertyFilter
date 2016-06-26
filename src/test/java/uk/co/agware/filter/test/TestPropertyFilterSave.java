@@ -7,6 +7,7 @@ import uk.co.agware.filter.PropertyFilter;
 import uk.co.agware.filter.PropertyFilterBuilder;
 import uk.co.agware.filter.data.Access;
 import uk.co.agware.filter.data.AccessType;
+import uk.co.agware.filter.data.Group;
 import uk.co.agware.filter.data.PermissionType;
 import uk.co.agware.filter.exceptions.PropertyFilterException;
 import uk.co.agware.filter.impl.DefaultClassFactory;
@@ -225,10 +226,10 @@ public class TestPropertyFilterSave {
 
     @Test
     public void testSaveWithNullExistingCollection() throws PropertyFilterException, IllegalAccessException {
-        FilterUtil.setDefaultAccessType(Access.Type.CREATE);
-        FilterUtil.setDefaultPermissionType(Permission.Type.WRITE);
-        List<Access> accessList = FilterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
-        Group group = new Group();
+        filterUtil.setDefaultAccessType(AccessType.CREATE);
+        filterUtil.setDefaultPermissionType(PermissionType.WRITE);
+        List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        Group group = new GroupImpl();
         group.setName(groupName);
         group.setAccess(accessList);
         group.setMembers(Collections.singletonList(username));
