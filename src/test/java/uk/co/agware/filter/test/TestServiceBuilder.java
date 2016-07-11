@@ -10,6 +10,7 @@ import org.mockito.MockitoAnnotations;
 import uk.co.agware.filter.PropertyFilter;
 import uk.co.agware.filter.PropertyFilterBuilder;
 import uk.co.agware.filter.data.Group;
+import uk.co.agware.filter.exceptions.PropertyFilterException;
 import uk.co.agware.filter.impl.GroupImpl;
 import uk.co.agware.filter.persistence.FilterRepository;
 import uk.co.agware.filter.service.FilterService;
@@ -94,7 +95,7 @@ public class TestServiceBuilder extends Mockito {
     }
 
     @Test
-    public void testStaticGroupAssignment(){
+    public void testStaticGroupAssignment() throws PropertyFilterException {
         FilterService service = new ServiceBuilder(propertyFilter)
                 .addPackageToScan("test.package")
                 .addStaticGroupAllocation("test", "group")
@@ -104,7 +105,7 @@ public class TestServiceBuilder extends Mockito {
     }
 
     @Test
-    public void testMultipleStaticGroupAssignment(){
+    public void testMultipleStaticGroupAssignment() throws PropertyFilterException {
         FilterService service = new ServiceBuilder(propertyFilter)
                 .addPackageToScan("test.package")
                 .addStaticGroupAllocation("test", "group")
@@ -118,7 +119,7 @@ public class TestServiceBuilder extends Mockito {
     }
 
     @Test
-    public void testStaticGroupAssignmentWithMap(){
+    public void testStaticGroupAssignmentWithMap() throws PropertyFilterException {
         Map<String, String> map = new HashMap<>();
         map.put("test", "group");
         map.put("test2", "group");

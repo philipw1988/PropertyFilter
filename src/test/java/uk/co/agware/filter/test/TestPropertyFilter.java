@@ -58,7 +58,7 @@ public class TestPropertyFilter {
     }
 
     @Test
-    public void testGetUsersGroup(){
+    public void testGetUsersGroup() throws PropertyFilterException {
         Assert.assertEquals(groupName, propertyFilter.getUsersGroup(username));
         Assert.assertEquals(groupName, propertyFilter.getUsersGroup("TEST"));
         Assert.assertEquals(groupName, propertyFilter.getUsersGroup("Test"));
@@ -75,7 +75,7 @@ public class TestPropertyFilter {
     }
 
     @Test
-    public void testLoad(){
+    public void testLoad() throws PropertyFilterException {
         Assert.assertEquals(propertyFilter.getUsersGroup(username), groupName);
         Map<String, Access> storedGroup = propertyFilter.getGroup(propertyFilter.getUsersGroup(username));
         Assert.assertEquals(5, storedGroup.keySet().size());
@@ -107,7 +107,7 @@ public class TestPropertyFilter {
     }
 
     @Test
-    public void testGetAccessibleClassesFromGroup(){
+    public void testGetAccessibleClassesFromGroup() throws PropertyFilterException {
         filterUtil.setDefaultAccessType(AccessType.CREATE);
         List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
         GroupImpl group = new GroupImpl();
@@ -122,7 +122,7 @@ public class TestPropertyFilter {
     }
 
     @Test
-    public void testGetAccessibleFieldsFromClassName(){
+    public void testGetAccessibleFieldsFromClassName() throws PropertyFilterException {
         List<Permission> permissions = propertyFilter.getAccessibleFieldsForGroup(TestClass.class.getName(), groupName);
         Assert.assertEquals(1, permissions.size());
         permissions = propertyFilter.getAccessibleFieldsForGroup(SecondTestClass.class.getName(), groupName);
@@ -130,7 +130,7 @@ public class TestPropertyFilter {
     }
 
     @Test
-    public void testGetAccessibleFieldsFromDisplayName(){
+    public void testGetAccessibleFieldsFromDisplayName() throws PropertyFilterException {
         List<Permission> permissions = propertyFilter.getAccessibleFieldsForGroup("Test Class", groupName);
         Assert.assertEquals(1, permissions.size());
         permissions = propertyFilter.getAccessibleFieldsForGroup(SecondTestClass.class.getName(), groupName);
@@ -138,7 +138,7 @@ public class TestPropertyFilter {
     }
 
     @Test
-    public void testGetAccessibleFieldsFromGroup(){
+    public void testGetAccessibleFieldsFromGroup() throws PropertyFilterException {
         String groupName = propertyFilter.getUsersGroup(username);
         List<Permission> permissions = propertyFilter.getAccessibleFieldsForGroup(TestClass.class.getName(), groupName);
         Assert.assertEquals(1, permissions.size());
@@ -163,7 +163,7 @@ public class TestPropertyFilter {
     }
 
     @Test
-    public void testAddUserToGroup(){
+    public void testAddUserToGroup() throws PropertyFilterException {
         propertyFilter.addUserToGroup("Test Username", groupName);
         Assert.assertEquals(groupName, propertyFilter.getUsersGroup("Test Username"));
     }

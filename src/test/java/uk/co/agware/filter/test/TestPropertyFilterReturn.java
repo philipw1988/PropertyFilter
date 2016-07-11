@@ -8,6 +8,7 @@ import uk.co.agware.filter.PropertyFilterBuilder;
 import uk.co.agware.filter.data.Access;
 import uk.co.agware.filter.data.AccessType;
 import uk.co.agware.filter.data.PermissionType;
+import uk.co.agware.filter.exceptions.GroupNotFoundException;
 import uk.co.agware.filter.exceptions.PropertyFilterException;
 import uk.co.agware.filter.impl.DefaultClassFactory;
 import uk.co.agware.filter.impl.GroupImpl;
@@ -157,7 +158,7 @@ public class TestPropertyFilterReturn {
         propertyFilter.parseObjectForReturn(new TestClass(), "A user without a group");
     }
 
-    @Test(expected = PropertyFilterException.class)
+    @Test(expected = GroupNotFoundException.class)
     public void testUnknownGroupName() throws PropertyFilterException {
         propertyFilter = new PropertyFilterBuilder().filterUtil(filterUtil).build();
         filterUtil.setDefaultAccessType(AccessType.READ);

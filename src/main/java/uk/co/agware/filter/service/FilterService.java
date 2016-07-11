@@ -183,31 +183,31 @@ public class FilterService {
         return propertyFilter.getAccess(className, username);
     }
 
-    public List<Permission> getAccessibleFields(Object target, String username){
+    public List<Permission> getAccessibleFields(Object target, String username) throws PropertyFilterException {
         return getAccessibleFields(target.getClass().getName(), username);
     }
 
-    public List<Permission> getAccessibleFields(Class clazz, String username){
+    public List<Permission> getAccessibleFields(Class clazz, String username) throws PropertyFilterException {
         return getAccessibleFields(clazz.getName(), username);
     }
 
-    public List<String> getAccessibleClasses(String username){
+    public List<String> getAccessibleClasses(String username) throws PropertyFilterException {
         return propertyFilter.getAccessibleClassesForGroup(propertyFilter.getUsersGroup(username));
     }
 
-    public List<Permission> getAccessibleFields(String className, String username){
+    public List<Permission> getAccessibleFields(String className, String username) throws PropertyFilterException {
         return getAccessibleFieldsForGroup(className, propertyFilter.getUsersGroup(username));
     }
 
-    public List<Permission> getAccessibleFieldsForGroup(Object target, String group){
+    public List<Permission> getAccessibleFieldsForGroup(Object target, String group) throws PropertyFilterException {
         return getAccessibleFieldsForGroup(target.getClass().getName(), group);
     }
 
-    public List<Permission> getAccessibleFieldsForGroup(Class clazz, String group){
+    public List<Permission> getAccessibleFieldsForGroup(Class clazz, String group) throws PropertyFilterException {
         return getAccessibleFieldsForGroup(clazz.getName(), group);
     }
 
-    public List<Permission> getAccessibleFieldsForGroup(String className, String group){
+    public List<Permission> getAccessibleFieldsForGroup(String className, String group) throws PropertyFilterException {
         return propertyFilter.getAccessibleFieldsForGroup(className, group);
     }
 }

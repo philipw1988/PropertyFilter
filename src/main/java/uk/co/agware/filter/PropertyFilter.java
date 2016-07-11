@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.co.agware.filter.data.*;
 import uk.co.agware.filter.exceptions.FilterException;
+import uk.co.agware.filter.exceptions.GroupNotFoundException;
 import uk.co.agware.filter.exceptions.PropertyFilterException;
 import uk.co.agware.filter.util.FilterUtil;
 
@@ -19,6 +20,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Collectors;
 
 /**
  * Created by Philip Ward <Philip.Ward@agware.com> on 9/04/2016.
@@ -78,6 +80,10 @@ public class PropertyFilter {
         return ignoredClasses.remove(clazz);
     }
 
+    /**
+     * Returns the current mapping of users to groups
+     * @return The map of users in groups
+     */
     public Map<String, String> getUserToGroupMap(){
         lock.readLock().lock();
         try {
@@ -89,7 +95,24 @@ public class PropertyFilter {
     }
 
     /**
-     * Refreshes the groups listing
+     * Returns a map of all the users in each group
+     *
+     * @return A map with the group names as keys and the users as a list
+     */
+    public Map<String, List<String>> getGroupMembership(){
+        lock.readLock().lock();
+        try {
+            return userToGroup.keySet().stream().collect(Collectors.groupingBy(userToGroup::get));
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    /**
+     * Refreshes the current group mapping, will overwrite the
+     * exiting set of mappings with the new set.
+     *
+     * @param GroupList The groups to add to the mapping
      */
     public void setGroups(List<Group> GroupList) {
         lock.writeLock().lock();
@@ -110,6 +133,11 @@ public class PropertyFilter {
         lock.writeLock().unlock();
     }
 
+    /**
+     * Returns the class mapping for a given group
+     * @param key The group name
+     * @return The class mapping for the given group
+     */
     public Map<String, Access> getGroup(String key){
         lock.readLock().lock();
         try {
@@ -117,98 +145,164 @@ public class PropertyFilter {
             if(group != null){
                 return new HashMap<>(group);
             }
-            return null;
+            throw new GroupNotFoundException(key);
         }
         finally {
             lock.readLock().unlock();
         }
     }
 
-    public void addUserToGroup(String username, String group){
-        userToGroup.put(username.toUpperCase(), group);
+    /**
+     * Adds a user to a group, will overwrite the existing
+     * mapping if it already exists. Will return the previous
+     * mapping if one existed.
+     *
+     * @param username The name of the user
+     * @param group The name of the group
+     */
+    public String addUserToGroup(String username, String group){
+        lock.writeLock().lock();
+        try {
+            return userToGroup.put(username.toUpperCase(), group);
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
-    public String getUsersGroup(String username){
+    /**
+     * Returns the group for a given user
+     * @param username The user to find the group of
+     * @return The name of the user's group, or null if no group is found
+     * @throws PropertyFilterException if the user does not have a group
+     */
+    public String getUsersGroup(String username) throws PropertyFilterException {
         lock.readLock().lock();
-        String groupName = userToGroup.get(username.toUpperCase());
-        lock.readLock().unlock();
-        return groupName;
+        try {
+            String group = userToGroup.get(username.toUpperCase());
+            if(group == null){
+                throw new PropertyFilterException(String.format("User %s has no group assigned", username));
+            }
+            return group;
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
+    /**
+     * Returns a list of accessible class names for a given group.
+     *
+     * @param group The group name to search for
+     * @return The list of accessible class names
+     */
     public List<String> getAccessibleClassesForGroup(String group){
         lock.readLock().lock();
-        Map<String, Access> accessMap = getGroup(group);
-        List<String> result = new ArrayList<>();
-        if(accessMap != null) {
-            for (Map.Entry<String, Access> e : accessMap.entrySet()) {
-                if (!e.getValue().getAccess().equals(AccessType.NO_ACCESS)) {
-                    result.add(e.getKey());
-                }
-            }
+        try {
+            Map<String, Access> accessMap = getGroup(group);
+            // filters out classes with NO_ACCESS and then returns the class name from the map key
+            return accessMap.entrySet().stream()
+                    .filter(e -> !e.getValue().getAccess().equals(AccessType.NO_ACCESS))
+                    .map(Map.Entry::getKey)
+                    .collect(Collectors.toList());
+        } finally {
+            lock.readLock().unlock();
         }
-        lock.readLock().unlock();
-        return result;
     }
 
-    public List<Permission> getAccessibleFieldsForGroup(String className, String group){
+    /**
+     * Returns a list of all accessible fields for a given group on a given
+     * class.
+     *
+     * @param className The name of the target class
+     * @param group The group of the user requesting the access
+     * @return A list of {@link Permission} entities for the class
+     * @throws PropertyFilterException If the group does not exist
+     */
+    public List<Permission> getAccessibleFieldsForGroup(String className, String group) throws PropertyFilterException {
         lock.readLock().lock();
-        Map<String, Access> accessMap = getGroup(group);
-        List<Permission> results = new ArrayList<>();
-        if(accessMap != null) {
-            Access access = accessMap.get(className);
-            if(access == null){
-                access = accessMap.get(displayToClassNames.get(className));
-            }
-            if (access != null) {
-                for (Permission p : FilterUtil.nullSafe(access.getPermissions())) {
-                    if (!p.getPermission().equals(PermissionType.NO_ACCESS)) {
-                        results.add(filterUtil.getClassFactory().copyPermissionClass(p));
-                    }
-                }
-            }
+        try {
+            Access access = getAccessForGroup(className, group);
+            return FilterUtil.nullSafeStream(access.getPermissions())
+                    .filter(p -> p.getPermission() != PermissionType.NO_ACCESS)
+                    .map(p -> filterUtil.getClassFactory().copyPermissionClass(p))
+                    .collect(Collectors.toList());
+        } finally {
+            lock.readLock().unlock();
         }
-        lock.readLock().unlock();
-        return results;
     }
 
+    /**
+     * Returns a user's access for a given class, first gets the users group
+     * before calling to {@link #getAccessForGroup(String, String)} to retrieve
+     * the value.
+     *
+     * @param className The class to retrieve the access value for
+     * @param username The name of the user
+     * @return The {@link Access} object for the given user's group on the given class
+     * @throws PropertyFilterException
+     */
     public Access getAccess(String className, String username) throws PropertyFilterException {
         String userGroup = getUsersGroup(username);
         if(userGroup == null) return null;
         return getAccessForGroup(className, userGroup);
     }
 
+    /**
+     * Retrieves the {@link Access} value for the given {@code group} on the specificed
+     * {@code className}.
+     *
+     * @param className The name of the class to get the access for
+     * @param groupName The name of the group to get the access for
+     * @return The {@link Access} object for the given class for the given group
+     * @throws PropertyFilterException If the given {@code group} does not exist
+     */
     public Access getAccessForGroup(String className, String groupName) throws PropertyFilterException {
         lock.readLock().lock();
-        Map<String, Access> accessMap = groups.get(groupName);
-        if(accessMap == null) throw new PropertyFilterException(String.format("Group %s does not exist", groupName));
-        Access access = accessMap.get(className);
-        if(access == null) {
-            access = accessMap.get(displayToClassNames.get(className));
+        try {
+            Map<String, Access> accessMap = groups.get(groupName);
+            if (accessMap == null) throw new PropertyFilterException(String.format("Group %s does not exist", groupName));
+            Access access = accessMap.get(className);
+            if (access == null) {
+                access = accessMap.get(displayToClassNames.get(className));
+            }
+            if(access == null) throw new FilterException(String.format("Group %s does not have any access set for class %s", groupName, className));
+            return access;
+        } finally {
+            lock.readLock().unlock();
         }
-        lock.readLock().unlock();
-        return access;
     }
 
+    /**
+     * Gets the group of a user and then returns the
+     * result of {@link #parseObjectForReturn(Object, String, String)}
+     *
+     * @param object The object to be parsed
+     * @param username The name of the user making the request
+     * @param <T> The type of the object being parsed
+     * @return The parsed object
+     * @throws PropertyFilterException If the user's group cannot be found
+     */
     public <T> T parseObjectForReturn(T object, String username) throws PropertyFilterException {
-        String userGroup = getUsersGroup(username);
-        if(userGroup == null){
-            LOGGER.warn("User {} has no group", username);
-            throw new PropertyFilterException(String.format("User %s has no group assigned", username));
-        }
-        return parseObjectForReturn(object, username, userGroup);
+        return parseObjectForReturn(object, username, getUsersGroup(username));
     }
 
+    /**
+     * Parses a supplied object, removing the values from it that
+     * the user does not have access to view, instantiates a blank object
+     * to achieve this, only moving over the values that are required.
+     *
+     * @param object The object to be parsed
+     * @param username The user making the request
+     * @param groupName The group that the user belongs to
+     * @param <T> The type of the object being parsed
+     * @return The parsed object
+     */
     @SuppressWarnings("unchecked")
-    public <T> T parseObjectForReturn(T object, String username, String groupName) throws PropertyFilterException {
+    public <T> T parseObjectForReturn(T object, String username, String groupName) {
         if(object == null) return null;
         if(ignoredClasses.contains(object.getClass())) return object; // If it's a class we're ignoring then just return the value
 
         Set<Field> fields = filterUtil.getAllFields(object);
         Map<String, Access> accessMap = getGroup(groupName);
-        if(accessMap == null) {
-            LOGGER.error("Could not find group {}", groupName);
-            throw new PropertyFilterException(String.format("Could not find group %s", groupName));
-        }
 
         T obj = (T) FilterUtil.instantiateObject(object.getClass()); // Create a blank object to fill with values
         try {
@@ -236,40 +330,69 @@ public class PropertyFilter {
                 }
             }
         } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-            LOGGER.error(e.getMessage(), e);
             throw new FilterException(e.getMessage(), e);
         }
         return obj;
     }
 
+    /**
+     * Parses a collection of objects for return, creates a new empty collection for the
+     * results values.
+     *
+     * @param collection The collection of objects to be parsed
+     * @param username The name of the user making the call
+     * @param groupName The group of the user making the call
+     * @param <T> The type of the objects in the collection
+     * @return A list of parsed entities
+     */
     @SuppressWarnings("unchecked")
-    private Collection handleCollectionForReturn(Collection collection, String username, String groupName) throws PropertyFilterException {
-        Collection result = (Collection) FilterUtil.instantiateObject(collection.getClass());
-        for(Object o : collection){
+    public <T> Collection<T> handleCollectionForReturn(Collection<T> collection, String username, String groupName) {
+        Collection<T> result = FilterUtil.instantiateCollection(collection.getClass());
+        for(T o : collection){
             if(ignoredClasses.contains(o.getClass())){
                 result.add(o);
             }
             else {
-                result.add(parseObjectForReturn(o, username, groupName));
+                T parsed = parseObjectForReturn(o, username, groupName);
+                if(parsed != null) {
+                    result.add(parsed);
+                }
             }
         }
         return result;
     }
 
-    public <T> T parseObjectForSaving(T newObject, T existingObject, String username) throws IllegalAccessException, PropertyFilterException {
-        String userGroup = getUsersGroup(username);
-        if(userGroup == null) {
-            LOGGER.debug("User {} has no group", username);
-            throw new PropertyFilterException(String.format("User %s has no group assigned", username));
-        }
-        return parseObjectForSaving(newObject, existingObject, username, userGroup);
+    /**
+     * Finds the group of the given user and then runs {@link #parseObjectForSaving(Object, Object, String, String)}
+     *
+     * @param newObject The object containing the new values
+     * @param existingObject The object containing the currently stored values
+     * @param username The name of the user making the request
+     * @param <T> The type of the object to be returned
+     * @return The {@code existingObject} with the correct new values copied over onto it
+     * @throws PropertyFilterException
+     */
+    public <T> T parseObjectForSaving(T newObject, T existingObject, String username) throws PropertyFilterException {
+        return parseObjectForSaving(newObject, existingObject, username, getUsersGroup(username));
     }
 
+    /**
+     * Parses a given object for return to the database, copies the accessible values from
+     * the {@code newObject} to the {@code existingObject}, ignoring any that are {@link uk.co.agware.filter.annotations.NoAccess}
+     * or {@link uk.co.agware.filter.annotations.ReadOnly}. Will filter any related classes
+     * that are detected as well, including collections, unless told not to.
+     *
+     * @param newObject The object containing new values to be saved into the database
+     * @param existingObject The object with the existing values from the database
+     * @param username The name of the user making the request
+     * @param groupName The group of the user making the request
+     * @param <T> The type of the object to be returned
+     * @return The {@code existingObject} with new values copied over into it
+     */
     //TODO Worry about maps
     @SuppressWarnings("unchecked")
-    public <T> T parseObjectForSaving(T newObject, T existingObject, String username, String groupName) throws IllegalAccessException {
+    public <T> T parseObjectForSaving(T newObject, T existingObject, String username, String groupName) {
         if(newObject == null) {
-            LOGGER.error("Null value passed into save method");
             throw new IllegalArgumentException("Null value passed into the filter save method");
         }
 
@@ -277,7 +400,6 @@ public class PropertyFilter {
 
         Set<Field> fields = filterUtil.getAllFields(newObject);
         Map<String, Access> accessMap = getGroup(groupName);
-        if(accessMap == null) throw new FilterException(String.format("Group %s does not exist in current groups map", groupName));
 
         if(existingObject == null) existingObject = (T) FilterUtil.instantiateObject(newObject.getClass());
 
@@ -319,23 +441,35 @@ public class PropertyFilter {
                 }
             }
         } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-            LOGGER.error(e.getMessage(), e);
             throw new FilterException(e.getMessage(), e);
         }
         return existingObject;
     }
 
+    /**
+     * Parses a collection of objects and returns a new collection containing the values
+     * from {@code existingCollection} with the values from {@code newCollection} copied over
+     * onto them. Relies on the objects having a valid {@code .equals()} method so that the
+     * matching objects can be used by {@link #parseObjectForSaving(Object, Object, String, String)}
+     *
+     * @param exitingCollection A collection containing the values stored in the database
+     * @param newCollection A collection containing the new values
+     * @param username The name of the user making the call
+     * @param groupName The group of the user
+     * @return A collection containing all the objects from {@code existingCollection} with the
+     * values from the matching object in {@code newCollection} copied over into them
+     */
     @SuppressWarnings("unchecked")
-    private Collection handleCollectionsForSaving(Collection exitingCollection, Collection newCollection, String username, String groupName) throws IllegalAccessException {
-        Collection resultingCollection = (Collection) FilterUtil.instantiateObject(newCollection.getClass());
+    public  <T> Collection<T> handleCollectionsForSaving(Collection<T> exitingCollection, Collection<T> newCollection, String username, String groupName) {
+        Collection<T> resultingCollection = FilterUtil.instantiateCollection(newCollection.getClass());
         if(!filterCollectionsOnSave){ // If we're not filtering collections then we just add all the new ones to the existing ones
             resultingCollection.addAll(newCollection);
             return resultingCollection;
         }
-        for(Object newVal : newCollection){
-            Object existingVal = null;
+        for(T newVal : newCollection){
+            T existingVal = null;
             if(exitingCollection != null){ // If there was no collection before, we don't need to check for the existence of the object before filtering
-                for(Object o : exitingCollection){
+                for(T o : exitingCollection){
                     if(o.equals(newVal)){
                         existingVal = o;
                         break;
@@ -349,7 +483,7 @@ public class PropertyFilter {
                 }
             }
             else { // Filter the object and add to the result
-                Object parsedObject = parseObjectForSaving(newVal, existingVal, username, groupName);
+                T parsedObject = parseObjectForSaving(newVal, existingVal, username, groupName);
                 resultingCollection.add(parsedObject);
             }
         }
