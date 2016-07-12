@@ -176,8 +176,11 @@ public class TestPropertyFilterReturn {
     /* Even though the "secret" field is @NoAccess on SecondTestClass, it should be copied over since we're not filtering collections */
     @Test
     public void testIgnoreFilterCollection() throws PropertyFilterException {
-        propertyFilter = new PropertyFilterBuilder().filterUtil(filterUtil).build();
-        propertyFilter.filterCollectionsOnLoad(false);
+        propertyFilter = new PropertyFilterBuilder()
+                .filterUtil(filterUtil)
+                .filterCollectionsOnLoad(false)
+                .build();
+
         filterUtil.setDefaultAccessType(AccessType.CREATE);
         filterUtil.setDefaultPermissionType(PermissionType.WRITE);
         List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");

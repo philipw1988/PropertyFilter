@@ -5,10 +5,7 @@ import org.junit.Before;
 import org.junit.Test;
 import uk.co.agware.filter.PropertyFilter;
 import uk.co.agware.filter.PropertyFilterBuilder;
-import uk.co.agware.filter.data.Access;
-import uk.co.agware.filter.data.AccessType;
-import uk.co.agware.filter.data.Permission;
-import uk.co.agware.filter.data.PermissionType;
+import uk.co.agware.filter.data.*;
 import uk.co.agware.filter.exceptions.PropertyFilterException;
 import uk.co.agware.filter.impl.AccessImpl;
 import uk.co.agware.filter.impl.DefaultClassFactory;
@@ -16,6 +13,7 @@ import uk.co.agware.filter.impl.GroupImpl;
 import uk.co.agware.filter.test.classes.*;
 import uk.co.agware.filter.util.FilterUtil;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -47,31 +45,11 @@ public class TestPropertyFilter {
     }
 
     @Test
-    public void testFilteringSettings(){
-        // Tests Default
-        Assert.assertTrue(propertyFilter.filterCollectionsOnLoad());
-        Assert.assertTrue(propertyFilter.filterCollectionsOnSave());
-        propertyFilter.filterCollectionsOnSave(false);
-        propertyFilter.filterCollectionsOnLoad(false);
-        Assert.assertFalse(propertyFilter.filterCollectionsOnLoad());
-        Assert.assertFalse(propertyFilter.filterCollectionsOnSave());
-    }
-
-    @Test
     public void testGetUsersGroup() throws PropertyFilterException {
         Assert.assertEquals(groupName, propertyFilter.getUsersGroup(username));
         Assert.assertEquals(groupName, propertyFilter.getUsersGroup("TEST"));
         Assert.assertEquals(groupName, propertyFilter.getUsersGroup("Test"));
         Assert.assertEquals(groupName, propertyFilter.getUsersGroup("TesT"));
-    }
-
-    @Test
-    public void testCollectionClasses(){
-        Assert.assertTrue(propertyFilter.ignoredClassesContains(String.class));
-        propertyFilter.addIgnoredClass(Short.class);
-        Assert.assertTrue(propertyFilter.ignoredClassesContains(Short.class));
-        Assert.assertTrue(propertyFilter.removeCollectionClass(Short.class));
-        Assert.assertFalse(propertyFilter.ignoredClassesContains(Short.class));
     }
 
     @Test
@@ -103,7 +81,7 @@ public class TestPropertyFilter {
 
     @Test
     public void testGetAvailableClasses(){
-        Assert.assertEquals(3, propertyFilter.getAccessibleClassesForGroup(groupName).size()); // The three objects with hardcoded values
+        Assert.assertEquals(3, propertyFilter.getAccessibleClasses(groupName).size()); // The three objects with hardcoded values
     }
 
     @Test
@@ -117,30 +95,30 @@ public class TestPropertyFilter {
         propertyFilter.setGroups(Collections.singletonList(group));
 
         String groupName = propertyFilter.getUsersGroup(username);
-        List<String> availableClasses = propertyFilter.getAccessibleClassesForGroup(groupName);
+        List<String> availableClasses = propertyFilter.getAccessibleClasses(groupName);
         Assert.assertEquals(4, availableClasses.size());
     }
 
     @Test
     public void testGetAccessibleFieldsFromClassName() throws PropertyFilterException {
-        List<Permission> permissions = propertyFilter.getAccessibleFieldsForGroup(TestClass.class.getName(), groupName);
+        List<Permission> permissions = propertyFilter.getAccessibleFields(TestClass.class.getName(), groupName);
         Assert.assertEquals(1, permissions.size());
-        permissions = propertyFilter.getAccessibleFieldsForGroup(SecondTestClass.class.getName(), groupName);
+        permissions = propertyFilter.getAccessibleFields(SecondTestClass.class.getName(), groupName);
         Assert.assertEquals(1, permissions.size());
     }
 
     @Test
     public void testGetAccessibleFieldsFromDisplayName() throws PropertyFilterException {
-        List<Permission> permissions = propertyFilter.getAccessibleFieldsForGroup("Test Class", groupName);
+        List<Permission> permissions = propertyFilter.getAccessibleFields("Test Class", groupName);
         Assert.assertEquals(1, permissions.size());
-        permissions = propertyFilter.getAccessibleFieldsForGroup(SecondTestClass.class.getName(), groupName);
+        permissions = propertyFilter.getAccessibleFields(SecondTestClass.class.getName(), groupName);
         Assert.assertEquals(1, permissions.size());
     }
 
     @Test
     public void testGetAccessibleFieldsFromGroup() throws PropertyFilterException {
         String groupName = propertyFilter.getUsersGroup(username);
-        List<Permission> permissions = propertyFilter.getAccessibleFieldsForGroup(TestClass.class.getName(), groupName);
+        List<Permission> permissions = propertyFilter.getAccessibleFields(TestClass.class.getName(), groupName);
         Assert.assertEquals(1, permissions.size());
     }
 
@@ -174,5 +152,36 @@ public class TestPropertyFilter {
         Assert.assertNotNull(map);
         Assert.assertEquals(1, map.size());
         Assert.assertEquals(groupName, map.get(username.toUpperCase())); // Username map uppercases the usernames
+    }
+
+    @Test
+    public void testGetGroupMembership(){
+        PropertyFilter propertyFilter = new PropertyFilterBuilder().build(); // Don't need to worry about anything else here
+        Group group1 = new GroupImpl();
+        group1.setName("Group 1");
+        group1.setMembers(Arrays.asList("Member 1", "Member 2"));
+        Group group2 = new GroupImpl();
+        group2.setName("Group 2");
+        group2.setMembers(Arrays.asList("Member 3", "Member 4"));
+        propertyFilter.setGroups(Arrays.asList(group1, group2));
+
+        // Check there are two groups returned
+        Map<String, List<String>> groupMembership = propertyFilter.getGroupMembership();
+        Assert.assertNotNull(groupMembership);
+        Assert.assertEquals(2, groupMembership.size());
+
+        // Check group 1 has the correct members (Usernames are uppercased in the back end)
+        List<String> members = groupMembership.get("Group 1");
+        Assert.assertNotNull(members);
+        Assert.assertEquals(2, members.size());
+        Assert.assertTrue(members.contains("MEMBER 1"));
+        Assert.assertTrue(members.contains("MEMBER 2"));
+
+        // Check group 2 has the correct members
+        members = groupMembership.get("Group 2");
+        Assert.assertNotNull(members);
+        Assert.assertEquals(2, members.size());
+        Assert.assertTrue(members.contains("MEMBER 3"));
+        Assert.assertTrue(members.contains("MEMBER 4"));
     }
 }

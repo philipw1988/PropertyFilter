@@ -69,7 +69,6 @@ public class TestPropertyFilterSave {
     private String secondTestSecret23 = "Secret 1";
     private Integer secondTestInt23 = 222;
 
-    private PropertyFilter propertyFilter;
     private FilterUtil filterUtil;
     private String username = "test";
     private String groupName = "Test Group";
@@ -105,11 +104,14 @@ public class TestPropertyFilterSave {
         testClass2.setStringList(new ArrayList<>(Arrays.asList(listString21, listString22, listString23)));
 
         filterUtil = new FilterUtil(new DefaultClassFactory());
-        propertyFilter = new PropertyFilterBuilder().filterUtil(filterUtil).build();
     }
 
     @Test
     public void testNoAccess() throws IllegalAccessException, PropertyFilterException {
+        PropertyFilter propertyFilter = new PropertyFilterBuilder()
+                .filterUtil(filterUtil)
+                .build();
+
         filterUtil.setDefaultAccessType(AccessType.NO_ACCESS);
         filterUtil.setDefaultPermissionType(PermissionType.NO_ACCESS);
         List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
@@ -124,6 +126,10 @@ public class TestPropertyFilterSave {
 
     @Test
     public void testReadAccess() throws IllegalAccessException, PropertyFilterException {
+        PropertyFilter propertyFilter = new PropertyFilterBuilder()
+                .filterUtil(filterUtil)
+                .build();
+
         filterUtil.setDefaultAccessType(AccessType.READ);
         filterUtil.setDefaultPermissionType(PermissionType.NO_ACCESS);
         List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
@@ -138,6 +144,10 @@ public class TestPropertyFilterSave {
 
     @Test
     public void testUpdateAccessNoPermissions() throws IllegalAccessException, PropertyFilterException {
+        PropertyFilter propertyFilter = new PropertyFilterBuilder()
+                .filterUtil(filterUtil)
+                .build();
+
         filterUtil.setDefaultAccessType(AccessType.UPDATE);
         filterUtil.setDefaultPermissionType(PermissionType.NO_ACCESS);
         List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
@@ -158,6 +168,10 @@ public class TestPropertyFilterSave {
 
     @Test
     public void testCreateAccessNoPermissions() throws IllegalAccessException, PropertyFilterException {
+        PropertyFilter propertyFilter = new PropertyFilterBuilder()
+                .filterUtil(filterUtil)
+                .build();
+
         filterUtil.setDefaultAccessType(AccessType.CREATE);
         filterUtil.setDefaultPermissionType(PermissionType.NO_ACCESS);
         List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
@@ -178,6 +192,10 @@ public class TestPropertyFilterSave {
 
     @Test
     public void testUpdateAccessWritePermissions() throws IllegalAccessException, PropertyFilterException {
+        PropertyFilter propertyFilter = new PropertyFilterBuilder()
+                .filterUtil(filterUtil)
+                .build();
+
         filterUtil.setDefaultAccessType(AccessType.UPDATE);
         filterUtil.setDefaultPermissionType(PermissionType.WRITE);
         List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
@@ -202,6 +220,10 @@ public class TestPropertyFilterSave {
 
     @Test
     public void testCreateAccessWritePermissions() throws IllegalAccessException, PropertyFilterException {
+        PropertyFilter propertyFilter = new PropertyFilterBuilder()
+                .filterUtil(filterUtil)
+                .build();
+
         filterUtil.setDefaultAccessType(AccessType.CREATE);
         filterUtil.setDefaultPermissionType(PermissionType.WRITE);
         List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
@@ -226,6 +248,10 @@ public class TestPropertyFilterSave {
 
     @Test
     public void testSaveWithNullExistingCollection() throws PropertyFilterException, IllegalAccessException {
+        PropertyFilter propertyFilter = new PropertyFilterBuilder()
+                .filterUtil(filterUtil)
+                .build();
+
         filterUtil.setDefaultAccessType(AccessType.CREATE);
         filterUtil.setDefaultPermissionType(PermissionType.WRITE);
         List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
@@ -246,6 +272,10 @@ public class TestPropertyFilterSave {
 
     @Test
     public void testNoDefinedAccess() throws IllegalAccessException, PropertyFilterException {
+        PropertyFilter propertyFilter = new PropertyFilterBuilder()
+                .filterUtil(filterUtil)
+                .build();
+
         filterUtil.setDefaultAccessType(AccessType.CREATE);
         filterUtil.setDefaultPermissionType(PermissionType.WRITE);
         List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
@@ -260,6 +290,10 @@ public class TestPropertyFilterSave {
 
     @Test(expected = PropertyFilterException.class)
     public void testNoGroup() throws IllegalAccessException, PropertyFilterException {
+        PropertyFilter propertyFilter = new PropertyFilterBuilder()
+                .filterUtil(filterUtil)
+                .build();
+
         filterUtil.setDefaultAccessType(AccessType.CREATE);
         filterUtil.setDefaultPermissionType(PermissionType.WRITE);
         List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
@@ -274,12 +308,21 @@ public class TestPropertyFilterSave {
 
     @Test(expected = IllegalArgumentException.class)
     public void testNullArg() throws IllegalAccessException {
+        PropertyFilter propertyFilter = new PropertyFilterBuilder()
+                .filterUtil(filterUtil)
+                .build();
+
         propertyFilter.parseObjectForSaving(null, null, username, groupName);
     }
 
     /* By setting ignore collections on save to true, the full collection should be copied over to the destination object regardless of permissions */
     @Test
     public void testIgnoredCollection() throws IllegalAccessException, PropertyFilterException {
+        PropertyFilter propertyFilter = new PropertyFilterBuilder()
+                .filterUtil(filterUtil)
+                .filterCollectionsOnSave(false)
+                .build();
+
         filterUtil.setDefaultAccessType(AccessType.CREATE);
         filterUtil.setDefaultPermissionType(PermissionType.WRITE);
         List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
@@ -299,7 +342,6 @@ public class TestPropertyFilterSave {
         TestClass tc3 = new TestClass();
         tc3.setSecondTestClasses(secondTestClasses);
 
-        propertyFilter.filterCollectionsOnSave(false);
         TestClass tc = propertyFilter.parseObjectForSaving(tc3, testClass2, username);
         Assert.assertEquals(3, tc.getSecondTestClasses().size());
         Assert.assertTrue(tc.getSecondTestClasses().contains(stc1));

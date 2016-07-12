@@ -25,59 +25,54 @@ import java.util.stream.Collectors;
 /**
  * Created by Philip Ward <Philip.Ward@agware.com> on 9/04/2016.
  */
-//TODO Put better commends on methods to explain what they're doing
 //TODO Need to worry about arrays as well as collections
 public class PropertyFilter {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PropertyFilter.class);
+    private final Logger logger = LoggerFactory.getLogger(PropertyFilter.class);
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
-    private final List<Class> ignoredClasses;
+    private final Set<Class> ignoredClasses= new HashSet<>(Arrays.asList(String.class, Integer.class, int.class, Double.class, double.class, Float.class, float.class, BigDecimal.class, Boolean.class, boolean.class, Byte.class, byte.class, Date.class, LocalDate.class, LocalDateTime.class, BigInteger.class, Long.class, long.class)); // Not efficient, but a lazy way to do it in one line
 
     private final BiMap<String, String> displayToClassNames = HashBiMap.create();
     private final Map<String, Map<String, Access>> groups = new HashMap<>();
     private final Map<String, String> userToGroup = new HashMap<>();
-    private boolean filterCollectionsOnSave = true;
-    private boolean filterCollectionOnLoad = true;
+    private boolean filterCollectionsOnSave;
+    private boolean filterRelationsOnSave;
+    private boolean filterCollectionOnLoad;
+    private boolean filterRelationsOnLoad;
 
     private FilterUtil filterUtil;
 
-    PropertyFilter(FilterUtil filterUtil) {
+    /* Package local constructor for use with the Builder */
+    PropertyFilter(FilterUtil filterUtil,
+                   Set<Class> ignoredClasses,
+                   boolean filterCollectionOnLoad,
+                   boolean filterRelationsOnLoad,
+                   boolean filterCollectionsOnSave,
+                   boolean filterRelationsOnSave) {
         this.filterUtil = filterUtil;
-        this.ignoredClasses = new ArrayList<>(Arrays.asList(String.class, Integer.class, int.class, Double.class, double.class, Float.class, float.class, BigDecimal.class, Boolean.class, boolean.class, Byte.class, byte.class, Date.class, LocalDate.class, LocalDateTime.class, BigInteger.class, Long.class, long.class)); // Not efficient, but a lazy way to do it in one line
+        this.ignoredClasses.addAll(ignoredClasses);
+        this.filterCollectionOnLoad = filterCollectionOnLoad;
+        this.filterRelationsOnLoad = filterRelationsOnLoad;
+        this.filterCollectionsOnSave = filterCollectionsOnSave;
+        this.filterRelationsOnSave = filterRelationsOnSave;
     }
 
+    /**
+     * Returns the {@link FilterUtil} used by this class.
+     *
+     * @return A reference to the {@link FilterUtil} used by the class
+     */
     public FilterUtil getFilterUtil() {
         return filterUtil;
     }
 
-    public void filterCollectionsOnSave(boolean filter) {
-        this.filterCollectionsOnSave = filter;
-    }
-
-    public void filterCollectionsOnLoad(boolean filter){
-        this.filterCollectionOnLoad = filter;
-    }
-
-    public boolean filterCollectionsOnSave() {
-        return filterCollectionsOnSave;
-    }
-
-    public boolean filterCollectionsOnLoad(){
-        return filterCollectionOnLoad;
-    }
-
-    public boolean ignoredClassesContains(Class clazz){
-        return ignoredClasses.contains(clazz);
-    }
-
-    public void addIgnoredClass(Class clazz){
-        if(!ignoredClasses.contains(clazz)) {
-            ignoredClasses.add(clazz);
-        }
-    }
-
-    public boolean removeCollectionClass(Class clazz){
-        return ignoredClasses.remove(clazz);
+    /**
+     * Adds a new class to the set of ignored classes.
+     *
+     * @param clazz The class to add
+     */
+    public boolean addIgnoredClass(Class clazz){
+        return ignoredClasses.add(clazz);
     }
 
     /**
@@ -194,7 +189,7 @@ public class PropertyFilter {
      * @param group The group name to search for
      * @return The list of accessible class names
      */
-    public List<String> getAccessibleClassesForGroup(String group){
+    public List<String> getAccessibleClasses(String group){
         lock.readLock().lock();
         try {
             Map<String, Access> accessMap = getGroup(group);
@@ -217,10 +212,11 @@ public class PropertyFilter {
      * @return A list of {@link Permission} entities for the class
      * @throws PropertyFilterException If the group does not exist
      */
-    public List<Permission> getAccessibleFieldsForGroup(String className, String group) throws PropertyFilterException {
+    public List<Permission> getAccessibleFields(String className, String group) throws PropertyFilterException {
         lock.readLock().lock();
         try {
             Access access = getAccessForGroup(className, group);
+            if(access == null) throw new FilterException(String.format("Group %s does not have Access defined for class %s", group, className));
             return FilterUtil.nullSafeStream(access.getPermissions())
                     .filter(p -> p.getPermission() != PermissionType.NO_ACCESS)
                     .map(p -> filterUtil.getClassFactory().copyPermissionClass(p))
@@ -258,8 +254,7 @@ public class PropertyFilter {
     public Access getAccessForGroup(String className, String groupName) throws PropertyFilterException {
         lock.readLock().lock();
         try {
-            Map<String, Access> accessMap = groups.get(groupName);
-            if (accessMap == null) throw new PropertyFilterException(String.format("Group %s does not exist", groupName));
+            Map<String, Access> accessMap = getGroup(groupName);
             Access access = accessMap.get(className);
             if (access == null) {
                 access = accessMap.get(displayToClassNames.get(className));
