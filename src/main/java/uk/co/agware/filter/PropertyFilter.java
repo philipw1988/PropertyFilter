@@ -23,6 +23,22 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 /**
+ * Handles entities that are passed to it using a set of rules that have been created for it.
+ * It is designed to copy values over from one object to another of the same type, ignoring any
+ * values that have been marked as inaccessible for the current user. It has methods for both the
+ * storage and retrieval of entities, with different rules for what values will and wont be copied
+ * in each direction.
+ *
+ * For "saving" an entity, it requires up to two entities to be passed one, one which is the "existing"
+ * entity, that is, the entity that holds the current values stored in the database, and one which is the "new"
+ * entity, which is one that has the new values the user wants to save away.
+ * If no new entity is passed into this method then it will attempt to create a blank one itself, this will require
+ * the entity class to have a default constructor available for use.
+ *
+ * For "Return" it will attempt to instantiate a blank copy of the entity to copy the values into. In this instance it
+ * only takes on entity as input, which is the one containing the values retrieved from the database, it will then copy
+ * over any values which the user should have at least "Read" access on.
+ *
  * Created by Philip Ward <Philip.Ward@agware.com> on 9/04/2016.
  */
 //TODO Need to worry about arrays as well as collections
@@ -162,6 +178,16 @@ public class PropertyFilter {
         } finally {
             lock.writeLock().unlock();
         }
+    }
+
+    /**
+     * Removes a user from their group assignment.
+     *
+     * @param username The user to remove from their group
+     * @return The name of the group the user was in, or null if the user did not have a mapping
+     */
+    public String removeUserFromGroup(String username){
+        return userToGroup.remove(username);
     }
 
     /**
@@ -308,9 +334,13 @@ public class PropertyFilter {
             for (Field f : fields) {
                 if (filterUtil.isFieldReadable(f.getName(), access) ) {
                     Object value = PropertyUtils.getProperty(object, f.getName());
+                    // If it isn't a collection
                     if (!Collection.class.isAssignableFrom(f.getType())) {
-                        // Parse down sub values, will escape on ignored classes
-                        value = parseObjectForReturn(value, username, groupName);
+                        // If it's a class we know about, and we aren't ignoring related values for parsing
+                        if(accessMap.keySet().contains(value.getClass().getName()) && filterRelationsOnLoad){
+                            // Parse down sub values, will escape on ignored classes
+                            value = parseObjectForReturn(value, username, groupName);
+                        }
                         PropertyUtils.setProperty(obj, f.getName(), value);
                     }
                     else {
@@ -410,7 +440,10 @@ public class PropertyFilter {
                         // If it's a normal class then we filter again, ignored classes will return full value
                         if(newValue != null) {
                             Object existingValue = PropertyUtils.getProperty(newObject, f.getName());
-                            newValue = parseObjectForSaving(newValue, existingValue, username, groupName);
+                            // Check if it's a known class and if we're filtering relations on save
+                            if(accessMap.keySet().contains(newValue.getClass().getName()) && filterRelationsOnSave) {
+                                newValue = parseObjectForSaving(newValue, existingValue, username, groupName);
+                            }
                             PropertyUtils.setProperty(existingObject, f.getName(), newValue);
                         }
                     }

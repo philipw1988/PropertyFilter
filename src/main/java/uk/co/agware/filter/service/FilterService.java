@@ -196,6 +196,35 @@ public class FilterService {
     }
 
     /**
+     * Adds a static allocation to a group, adds the allocation to the
+     * held static list, and also updates the mapping in the {@link PropertyFilter},
+     * this mapping will remain through refreshes of the groups until the
+     * application is shut down, another mapping replaces it,
+     * or {@link #removeGroupAllocation(String)} method is called.
+     *
+     * @param username The username to add to the group
+     * @param group The group to add the user to
+     */
+    public void addStaticGroupAllocation(String username, String group){
+        staticGroupAllocation.put(username, group);
+        propertyFilter.addUserToGroup(username, group);
+    }
+
+    /**
+     * Removes a group allocation from the {@link PropertyFilter}, and additionally
+     * the {@link #staticGroupAllocation} if it is present in there, this method only
+     * affects the mapping during run time, it does not persist the changes, for that
+     * the {@link #saveGroup(Group)} method should be called.
+     *
+     * @param username The username to remove
+     * @return The group name that was associated with the user
+     */
+    public String removeGroupAllocation(String username){
+        staticGroupAllocation.remove(username);
+        return propertyFilter.removeUserFromGroup(username);
+    }
+
+    /**
      * Returns a {@link Group} from the repository
      *
      * @param id The ID of the group
