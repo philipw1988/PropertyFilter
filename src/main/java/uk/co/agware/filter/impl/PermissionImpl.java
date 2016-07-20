@@ -1,33 +1,26 @@
-package uk.co.agware.filter.objects;
+package uk.co.agware.filter.impl;
+
+import uk.co.agware.filter.data.Permission;
+import uk.co.agware.filter.data.PermissionType;
 
 /**
  * Created by Philip Ward <Philip.Ward@agware.com> on 17/09/2015.
  */
-public class Permission implements Comparable<Permission> {
-
-    public enum Type {READ, WRITE, NO_ACCESS}
+public class PermissionImpl implements Permission {
 
     private String propertyName;
     private String displayName;
-    private Type permission;
+    private PermissionType permission;
     private boolean modifiable;
 
-    public Permission() {
+    public PermissionImpl() {
         this.modifiable = false;
     }
 
-    public Permission(String propertyName, Type permission, boolean modifiable) {
+    public PermissionImpl(String propertyName, PermissionType permission, boolean modifiable) {
         this.propertyName = propertyName;
         this.permission = permission;
         this.modifiable = modifiable;
-    }
-
-    public Permission(Permission p) {
-        if(p == null) throw new IllegalArgumentException("Trying to create a copy of a null Permission");
-        this.propertyName = p.getPropertyName();
-        this.displayName = p.getDisplayName();
-        this.permission = p.getPermission();
-        this.modifiable = p.isModifiable();
     }
 
     public String getPropertyName() {
@@ -46,11 +39,11 @@ public class Permission implements Comparable<Permission> {
         this.displayName = displayName;
     }
 
-    public Type getPermission() {
+    public PermissionType getPermission() {
         return permission;
     }
 
-    public void setPermission(Type permission) {
+    public void setPermission(PermissionType permission) {
         this.permission = permission;
     }
 
@@ -65,9 +58,9 @@ public class Permission implements Comparable<Permission> {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Permission)) return false;
+        if (!(o instanceof PermissionImpl)) return false;
 
-        Permission that = (Permission) o;
+        PermissionImpl that = (PermissionImpl) o;
 
         if (modifiable != that.modifiable) return false;
         if (propertyName != null ? !propertyName.equals(that.propertyName) : that.propertyName != null) return false;
@@ -86,8 +79,8 @@ public class Permission implements Comparable<Permission> {
     @Override
     public int compareTo(Permission o) {
         if(this.displayName == null) return -1;
-        if(o.displayName == null) return 1;
-        return this.displayName.compareTo(o.displayName);
+        if(o.getDisplayName() == null) return 1;
+        return this.displayName.compareTo(o.getDisplayName());
     }
 
     @Override

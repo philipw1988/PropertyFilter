@@ -1,80 +1,78 @@
-package uk.co.agware.filter.objects;
+package uk.co.agware.filter.impl;
 
-import uk.co.agware.filter.util.FilterUtil;
+import uk.co.agware.filter.data.AccessType;
+import uk.co.agware.filter.data.Access;
+import uk.co.agware.filter.data.Permission;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Created by Philip Ward <Philip.Ward@agware.com> on 17/09/2015.
  */
-public class Access implements Comparable<Access> {
-
-    public enum Type {NO_ACCESS, READ, CREATE, UPDATE}
+public class AccessImpl implements Access {
 
     private String objectClass;
     private String displayName;
-    private Type access;
+    private AccessType access;
     private boolean modifiable;
     private List<Permission> permissions;
 
-    public Access() {
+    public AccessImpl() {
         modifiable = false;
     }
 
-    public Access(String objectClass, Type access, boolean modifiable) {
+    public AccessImpl(String objectClass, AccessType access, boolean modifiable) {
         this.objectClass = objectClass;
         this.access = access;
         this.modifiable = modifiable;
     }
 
-    public Access(Access access){
-        if(access == null) throw new IllegalArgumentException("Trying to create a copy of a null Access");
-        this.objectClass = access.getObjectClass();
-        this.displayName = access.getDisplayName();
-        this.access = access.getAccess();
-        this.permissions = new ArrayList<>(FilterUtil.nullSafe(access.getPermissions()).size());
-        this.modifiable = access.isModifiable();
-        permissions.addAll(FilterUtil.nullSafe(access.getPermissions()).stream().map(Permission::new).collect(Collectors.toList()));
-    }
-
+    @Override
     public String getObjectClass() {
         return objectClass;
     }
 
+    @Override
     public void setObjectClass(String objectClass) {
         this.objectClass = objectClass;
     }
 
+    @Override
     public String getDisplayName() {
         return displayName;
     }
 
+    @Override
     public void setDisplayName(String displayName) {
         this.displayName = displayName;
     }
 
-    public Type getAccess() {
+    @Override
+    public AccessType getAccess() {
         return access;
     }
 
-    public void setAccess(Type access) {
+    @Override
+    public void setAccess(AccessType access) {
         this.access = access;
     }
 
+    @Override
     public List<Permission> getPermissions() {
         return permissions;
     }
 
-    public void setPermissions(List<Permission> permissions) {
-        this.permissions = permissions;
+    @Override
+    public <T extends Permission> void setPermissions(List<T> permissions) {
+        this.permissions = (List<Permission>) permissions;
     }
 
+    @Override
     public boolean isModifiable() {
         return modifiable;
     }
 
+    @Override
     public void setModifiable(boolean modifiable) {
         this.modifiable = modifiable;
     }
@@ -82,9 +80,9 @@ public class Access implements Comparable<Access> {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Access)) return false;
+        if (!(o instanceof AccessImpl)) return false;
 
-        Access access1 = (Access) o;
+        AccessImpl access1 = (AccessImpl) o;
 
         if (modifiable != access1.modifiable) return false;
         if (objectClass != null ? !objectClass.equals(access1.objectClass) : access1.objectClass != null) return false;
@@ -103,8 +101,8 @@ public class Access implements Comparable<Access> {
     @Override
     public int compareTo(Access o) {
         if(this.objectClass == null) return -1;
-        if(o.objectClass == null) return 1;
-        return this.objectClass.compareTo(o.objectClass);
+        if(o.getObjectClass() == null) return 1;
+        return this.objectClass.compareTo(o.getObjectClass());
     }
 
     @Override
