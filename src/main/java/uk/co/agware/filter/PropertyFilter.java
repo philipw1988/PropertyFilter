@@ -196,17 +196,41 @@ public class PropertyFilter {
      * @return The name of the user's group, or null if no group is found
      * @throws PropertyFilterException if the user does not have a group
      */
-    public String getUsersGroup(String username) throws PropertyFilterException {
+    public String getUsersGroup(String username) {
         lock.readLock().lock();
         try {
             String group = userToGroup.get(username.toUpperCase());
             if(group == null){
-                throw new PropertyFilterException(String.format("User %s has no group assigned", username));
+                throw new FilterException(String.format("User %s has no group assigned", username));
             }
             return group;
         } finally {
             lock.readLock().unlock();
         }
+    }
+
+    /**
+     * Returns whether or not a has write access to a class.
+     *
+     * @param className The full class name
+     * @param username The name of the user
+     * @return Whether the user has read access or not
+     */
+    public boolean hasWriteAccess(String className, String username){
+        Access access = getAccess(className, username);
+        return access.getAccess() == AccessType.CREATE || access.getAccess() == AccessType.UPDATE;
+    }
+
+    /**
+     * Returns whether or not a has read access to a class.
+     *
+     * @param className The full class name
+     * @param username The name of the user
+     * @return Whether the user has read access or not
+     */
+    public boolean hasReadAccess(String className, String username){
+        Access access = getAccess(className, username);
+        return access.getAccess() != AccessType.NO_ACCESS;
     }
 
     /**
@@ -238,7 +262,7 @@ public class PropertyFilter {
      * @return A list of {@link Permission} entities for the class
      * @throws PropertyFilterException If the group does not exist
      */
-    public List<Permission> getAccessibleFields(String className, String group) throws PropertyFilterException {
+    public List<Permission> getAccessibleFields(String className, String group){
         lock.readLock().lock();
         try {
             Access access = getAccessForGroup(className, group);
@@ -262,7 +286,7 @@ public class PropertyFilter {
      * @return The {@link Access} object for the given user's group on the given class
      * @throws PropertyFilterException
      */
-    public Access getAccess(String className, String username) throws PropertyFilterException {
+    public Access getAccess(String className, String username){
         String userGroup = getUsersGroup(username);
         if(userGroup == null) return null;
         return getAccessForGroup(className, userGroup);
@@ -277,7 +301,7 @@ public class PropertyFilter {
      * @return The {@link Access} object for the given class for the given group
      * @throws PropertyFilterException If the given {@code group} does not exist
      */
-    public Access getAccessForGroup(String className, String groupName) throws PropertyFilterException {
+    public Access getAccessForGroup(String className, String groupName){
         lock.readLock().lock();
         try {
             Map<String, Access> accessMap = getGroup(groupName);
@@ -302,7 +326,7 @@ public class PropertyFilter {
      * @return The parsed object
      * @throws PropertyFilterException If the user's group cannot be found
      */
-    public <T> T parseObjectForReturn(T object, String username) throws PropertyFilterException {
+    public <T> T parseObjectForReturn(T object, String username){
         return parseObjectForReturn(object, username, getUsersGroup(username));
     }
 
@@ -397,7 +421,7 @@ public class PropertyFilter {
      * @return The {@code existingObject} with the correct new values copied over onto it
      * @throws PropertyFilterException
      */
-    public <T> T parseObjectForSaving(T newObject, T existingObject, String username) throws PropertyFilterException {
+    public <T> T parseObjectForSaving(T newObject, T existingObject, String username){
         return parseObjectForSaving(newObject, existingObject, username, getUsersGroup(username));
     }
 

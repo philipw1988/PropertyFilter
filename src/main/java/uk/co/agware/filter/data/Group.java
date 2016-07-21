@@ -17,7 +17,7 @@ public interface Group extends Comparable<Group> {
 
     void setMembers(List<String> members);
 
-    List<Access> getAccess();
+    <T extends Access> List<T> getAccess();
 
     <T extends Access> void setAccess(List<T> accessList);
 }

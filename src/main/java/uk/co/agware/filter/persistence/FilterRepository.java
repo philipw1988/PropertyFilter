@@ -7,15 +7,15 @@ import java.util.List;
 /**
  * Created by Philip Ward <Philip.Ward@agware.com> on 24/06/2016.
  */
-public interface FilterRepository {
+public interface FilterRepository<G extends Group> {
 
-    <T extends Group> T getGroup(String id);
+    G getGroup(String id);
 
-    <T extends Group> List<T> getGroups();
+    List<G> getGroups();
 
-    <T extends Group> List<T> initGroups();
+    List<G> initGroups();
 
-    String save(Group group);
+    Object save(Group group);
 
     void delete(String id);
 }

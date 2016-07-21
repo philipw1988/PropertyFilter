@@ -258,10 +258,11 @@ public class FilterService {
      *
      * @param group The group to be saved
      */
-    public void saveGroup(Group group){
-        repository.save(group);
+    public Object saveGroup(Group group){
+        Object id = repository.save(group);
         List<Group> groups = repository.getGroups();
         setGroups(groups);
+        return id;
     }
 
     /* Delegating calls to PropertyFilter */

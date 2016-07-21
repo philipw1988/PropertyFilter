@@ -11,20 +11,20 @@ import java.util.List;
  *
  * Does nothing, used when no other persistence entity is defined for the Filter Service to use
  */
-public class PseudoRepository implements FilterRepository {
+public class PseudoRepository implements FilterRepository<GroupImpl> {
 
     @Override
-    public <T extends Group> T getGroup(String id) {
+    public GroupImpl getGroup(String id) {
         return null;
     }
 
     @Override
-    public <T extends Group> List<T> getGroups() {
+    public List<GroupImpl> getGroups() {
         return new ArrayList<>();
     }
 
     @Override
-    public <T extends Group> List<T> initGroups() {
+    public List<GroupImpl> initGroups() {
         return new ArrayList<>();
     }
 

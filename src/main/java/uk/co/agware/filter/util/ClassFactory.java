@@ -6,13 +6,13 @@ import uk.co.agware.filter.data.Permission;
 /**
  * Created by Philip Ward <Philip.Ward@agware.com> on 24/06/2016.
  */
-public interface ClassFactory {
+public interface ClassFactory<A extends Access, P extends Permission> {
 
-    <T extends Access> T createAccessClass();
+    A createAccessClass();
 
-    <T extends Access> T copyAccessClass(T old);
+    A copyAccessClass(A old);
 
-    <T extends Permission> T createPermissionClass();
+    P createPermissionClass();
 
-    <T extends Permission> T copyPermissionClass(T old);
+    P copyPermissionClass(P old);
 }

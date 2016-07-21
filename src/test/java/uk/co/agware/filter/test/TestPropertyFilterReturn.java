@@ -8,6 +8,7 @@ import uk.co.agware.filter.PropertyFilterBuilder;
 import uk.co.agware.filter.data.Access;
 import uk.co.agware.filter.data.AccessType;
 import uk.co.agware.filter.data.PermissionType;
+import uk.co.agware.filter.exceptions.FilterException;
 import uk.co.agware.filter.exceptions.GroupNotFoundException;
 import uk.co.agware.filter.exceptions.PropertyFilterException;
 import uk.co.agware.filter.impl.DefaultClassFactory;
@@ -143,7 +144,7 @@ public class TestPropertyFilterReturn {
         Assert.assertArrayEquals(testClass.getSecondTestClasses().toArray(), t.getSecondTestClasses().toArray());
     }
 
-    @Test(expected = PropertyFilterException.class)
+    @Test(expected = FilterException.class)
     public void testUserHasNoGroup() throws PropertyFilterException {
         propertyFilter = new PropertyFilterBuilder().filterUtil(filterUtil).build();
         filterUtil.setDefaultAccessType(AccessType.READ);

@@ -141,7 +141,7 @@ public class FilterUtil {
     }
 
     public <T extends Access> T buildBaseAccess(Class c){
-        T access = classFactory.createAccessClass();
+        T access = (T) classFactory.createAccessClass();
         access.setObjectClass(c.getName());
 
         FilterTarget ft = (FilterTarget) c.getAnnotation(FilterTarget.class);

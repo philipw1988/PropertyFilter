@@ -9,6 +9,7 @@ import uk.co.agware.filter.data.Access;
 import uk.co.agware.filter.data.AccessType;
 import uk.co.agware.filter.data.Group;
 import uk.co.agware.filter.data.PermissionType;
+import uk.co.agware.filter.exceptions.FilterException;
 import uk.co.agware.filter.exceptions.PropertyFilterException;
 import uk.co.agware.filter.impl.DefaultClassFactory;
 import uk.co.agware.filter.impl.GroupImpl;
@@ -288,7 +289,7 @@ public class TestPropertyFilterSave {
         propertyFilter.parseObjectForSaving(new NoDefaultConstructor("1"), new NoDefaultConstructor("2"), username);
     }
 
-    @Test(expected = PropertyFilterException.class)
+    @Test(expected = FilterException.class)
     public void testNoGroup() throws IllegalAccessException, PropertyFilterException {
         PropertyFilter propertyFilter = new PropertyFilterBuilder()
                 .filterUtil(filterUtil)
