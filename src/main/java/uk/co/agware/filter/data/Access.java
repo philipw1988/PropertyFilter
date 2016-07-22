@@ -19,7 +19,7 @@ public interface Access extends Comparable<Access> {
 
     void setAccess(AccessType read);
 
-    List<Permission> getPermissions();
+    <T extends Permission> List<T> getPermissions();
 
     <T extends Permission> void setPermissions(List<T> permissions);
 

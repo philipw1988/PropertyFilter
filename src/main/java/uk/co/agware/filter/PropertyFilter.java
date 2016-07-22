@@ -217,8 +217,14 @@ public class PropertyFilter {
      * @return Whether the user has read access or not
      */
     public boolean hasWriteAccess(String className, String username){
-        Access access = getAccess(className, username);
-        return access.getAccess() == AccessType.CREATE || access.getAccess() == AccessType.UPDATE;
+        try {
+            Access access = getAccess(className, username);
+            return access.getAccess() == AccessType.CREATE || access.getAccess() == AccessType.UPDATE;
+        }
+        // Simply return false instead of an error
+        catch (FilterException e){
+            return false;
+        }
     }
 
     /**
@@ -229,8 +235,13 @@ public class PropertyFilter {
      * @return Whether the user has read access or not
      */
     public boolean hasReadAccess(String className, String username){
-        Access access = getAccess(className, username);
-        return access.getAccess() != AccessType.NO_ACCESS;
+        try {
+            Access access = getAccess(className, username);
+            return access.getAccess() != AccessType.NO_ACCESS;}
+        // Simply return false instead of an error
+        catch (FilterException e){
+            return false;
+        }
     }
 
     /**
