@@ -369,6 +369,11 @@ public class PropertyFilter {
             for (Field f : fields) {
                 if (filterUtil.isFieldReadable(f.getName(), access) ) {
                     Object value = PropertyUtils.getProperty(object, f.getName());
+                    // For null values, simply write them across
+                    if(value == null){
+                        PropertyUtils.setProperty(obj, f.getName(), null);
+                        continue;
+                    }
                     // If it isn't a collection
                     if (!Collection.class.isAssignableFrom(f.getType())) {
                         // If it's a class we know about, and we aren't ignoring related values for parsing
@@ -382,7 +387,7 @@ public class PropertyFilter {
                         if(!filterCollectionOnLoad){ // Just dump the collection in
                             PropertyUtils.setProperty(obj, f.getName(), value);
                         }
-                        else if(value != null){
+                        else {
                             Collection resultingCollection = handleCollectionForReturn((Collection) value, username, groupName);
                             PropertyUtils.setProperty(obj, f.getName(), resultingCollection);
                         }
