@@ -9,6 +9,7 @@ import uk.co.agware.filter.data.*;
 import uk.co.agware.filter.exceptions.FilterException;
 import uk.co.agware.filter.exceptions.GroupNotFoundException;
 import uk.co.agware.filter.exceptions.PropertyFilterException;
+import uk.co.agware.filter.util.ClassFactory;
 import uk.co.agware.filter.util.FilterUtil;
 
 import java.lang.reflect.Field;
@@ -46,10 +47,10 @@ public class PropertyFilter {
 
     private final Logger logger = LoggerFactory.getLogger(PropertyFilter.class);
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
-    private final Set<Class> ignoredClasses= new HashSet<>(Arrays.asList(String.class, Integer.class, int.class, Double.class, double.class, Float.class, float.class, BigDecimal.class, Boolean.class, boolean.class, Byte.class, byte.class, Date.class, LocalDate.class, LocalDateTime.class, BigInteger.class, Long.class, long.class)); // Not efficient, but a lazy way to do it in one line
+    private final Set<Class<?>> ignoredClasses= new HashSet<>(Arrays.asList(String.class, Integer.class, int.class, Double.class, double.class, Float.class, float.class, BigDecimal.class, Boolean.class, boolean.class, Byte.class, byte.class, Date.class, LocalDate.class, LocalDateTime.class, BigInteger.class, Long.class, long.class)); // Not efficient, but a lazy way to do it in one line
 
     private final BiMap<String, String> displayToClassNames = HashBiMap.create();
-    private final Map<String, Map<String, Access>> groups = new HashMap<>();
+    private final Map<String, Map<String, Access<? extends Permission>>> groups = new HashMap<>();
     private final Map<String, String> userToGroup = new HashMap<>();
     private boolean filterCollectionsOnSave;
     private boolean filterRelationsOnSave;
@@ -60,7 +61,7 @@ public class PropertyFilter {
 
     /* Package local constructor for use with the Builder */
     PropertyFilter(FilterUtil filterUtil,
-                   Set<Class> ignoredClasses,
+                   Set<Class<?>> ignoredClasses,
                    boolean filterCollectionOnLoad,
                    boolean filterRelationsOnLoad,
                    boolean filterCollectionsOnSave,
@@ -87,7 +88,7 @@ public class PropertyFilter {
      *
      * @param clazz The class to add
      */
-    public boolean addIgnoredClass(Class clazz){
+    public boolean addIgnoredClass(Class<?> clazz){
         return ignoredClasses.add(clazz);
     }
 
@@ -130,8 +131,8 @@ public class PropertyFilter {
         groups.clear();
         userToGroup.clear();
         for (Group<? extends Access> g : FilterUtil.nullSafe(GroupList)) {
-            Map<String, Access> accessMap = new HashMap<>();
-            for (Access a : FilterUtil.nullSafe(g.getAccess())) {
+            Map<String, Access<? extends Permission>> accessMap = new HashMap<>();
+            for (Access<? extends Permission> a : FilterUtil.nullSafe(g.getAccess())) {
                 accessMap.put(a.getObjectClass(), a);
                 String displayName = a.getDisplayName() == null || "".equals(a.getDisplayName()) ? a.getObjectClass() : a.getDisplayName();
                 displayToClassNames.put(displayName, a.getObjectClass());
@@ -149,10 +150,10 @@ public class PropertyFilter {
      * @param key The group name
      * @return The class mapping for the given group
      */
-    public Map<String, Access> getGroup(String key){
+    public Map<String, Access<? extends Permission>> getGroup(String key){
         lock.readLock().lock();
         try {
-            Map<String, Access> group = groups.get(key);
+            Map<String, Access<? extends Permission>> group = groups.get(key);
             if(group != null){
                 return new HashMap<>(group);
             }
@@ -218,7 +219,7 @@ public class PropertyFilter {
      */
     public boolean hasWriteAccess(String className, String username){
         try {
-            Access access = getAccess(className, username);
+            Access<? extends Permission> access = getAccess(className, username);
             return access.getAccess() == AccessType.CREATE || access.getAccess() == AccessType.UPDATE;
         }
         // Simply return false instead of an error
@@ -236,7 +237,7 @@ public class PropertyFilter {
      */
     public boolean hasReadAccess(String className, String username){
         try {
-            Access access = getAccess(className, username);
+            Access<? extends Permission> access = getAccess(className, username);
             return access.getAccess() != AccessType.NO_ACCESS;}
         // Simply return false instead of an error
         catch (FilterException e){
@@ -253,7 +254,7 @@ public class PropertyFilter {
     public List<String> getAccessibleClasses(String group){
         lock.readLock().lock();
         try {
-            Map<String, Access> accessMap = getGroup(group);
+            Map<String, Access<? extends Permission>> accessMap = getGroup(group);
             // filters out classes with NO_ACCESS and then returns the class name from the map key
             return accessMap.entrySet().stream()
                     .filter(e -> !e.getValue().getAccess().equals(AccessType.NO_ACCESS))
@@ -271,16 +272,16 @@ public class PropertyFilter {
      * @param className The name of the target class
      * @param group The group of the user requesting the access
      * @return A list of {@link Permission} entities for the class
-     * @throws PropertyFilterException If the group does not exist
      */
     public List<? extends Permission> getAccessibleFields(String className, String group){
         lock.readLock().lock();
         try {
             Access<? extends Permission> access = getAccessForGroup(className, group);
             if(access == null) throw new FilterException(String.format("Group %s does not have Access defined for class %s", group, className));
+            ClassFactory classFactory = filterUtil.getClassFactory();
             return FilterUtil.nullSafeStream(access.getPermissions())
                     .filter(p -> p.getPermission() != PermissionType.NO_ACCESS)
-                    .map(p -> filterUtil.getClassFactory().copyPermissionClass(p))
+                    .map(p -> classFactory.copyPermissionClass(p)) // Cannot be changed, too much generics
                     .collect(Collectors.toList());
         } finally {
             lock.readLock().unlock();
@@ -297,7 +298,7 @@ public class PropertyFilter {
      * @return The {@link Access} object for the given user's group on the given class
      * @throws PropertyFilterException
      */
-    public Access getAccess(String className, String username){
+    public Access<? extends Permission> getAccess(String className, String username){
         String userGroup = getUsersGroup(username);
         if(userGroup == null) return null;
         return getAccessForGroup(className, userGroup);
@@ -315,8 +316,8 @@ public class PropertyFilter {
     public Access<? extends Permission> getAccessForGroup(String className, String groupName){
         lock.readLock().lock();
         try {
-            Map<String, Access> accessMap = getGroup(groupName);
-            Access access = accessMap.get(className);
+            Map<String, Access<? extends Permission>> accessMap = getGroup(groupName);
+            Access<? extends Permission> access = accessMap.get(className);
             if (access == null) {
                 access = accessMap.get(displayToClassNames.get(className));
             }
@@ -335,7 +336,6 @@ public class PropertyFilter {
      * @param username The name of the user making the request
      * @param <T> The type of the object being parsed
      * @return The parsed object
-     * @throws PropertyFilterException If the user's group cannot be found
      */
     public <T> T parseObjectForReturn(T object, String username){
         return parseObjectForReturn(object, username, getUsersGroup(username));
@@ -358,11 +358,11 @@ public class PropertyFilter {
         if(ignoredClasses.contains(object.getClass())) return object; // If it's a class we're ignoring then just return the value
 
         Set<Field> fields = filterUtil.getAllFields(object);
-        Map<String, Access> accessMap = getGroup(groupName);
+        Map<String, Access<? extends Permission>> accessMap = getGroup(groupName);
 
         T obj = (T) FilterUtil.instantiateObject(object.getClass()); // Create a blank object to fill with values
         try {
-            Access access = accessMap.get(object.getClass().getName());
+            Access<? extends Permission> access = accessMap.get(object.getClass().getName());
             if(access == null) throw new FilterException("Access missing for class of type " +object.getClass().getName());
             if(access.getAccess().equals(AccessType.NO_ACCESS)) return null; // If they don't have access then return null so they can't view the data at all
 
@@ -388,7 +388,7 @@ public class PropertyFilter {
                             PropertyUtils.setProperty(obj, f.getName(), value);
                         }
                         else {
-                            Collection resultingCollection = handleCollectionForReturn((Collection) value, username, groupName);
+                            Collection<?> resultingCollection = handleCollectionForReturn((Collection<?>) value, username, groupName);
                             PropertyUtils.setProperty(obj, f.getName(), resultingCollection);
                         }
                     }
@@ -435,7 +435,6 @@ public class PropertyFilter {
      * @param username The name of the user making the request
      * @param <T> The type of the object to be returned
      * @return The {@code existingObject} with the correct new values copied over onto it
-     * @throws PropertyFilterException
      */
     public <T> T parseObjectForSaving(T newObject, T existingObject, String username){
         return parseObjectForSaving(newObject, existingObject, username, getUsersGroup(username));
@@ -464,11 +463,11 @@ public class PropertyFilter {
         if(ignoredClasses.contains(newObject.getClass())) return newObject; // If we're ignoring the value, just return the new one
 
         Set<Field> fields = filterUtil.getAllFields(newObject);
-        Map<String, Access> accessMap = getGroup(groupName);
+        Map<String, Access<? extends Permission>> accessMap = getGroup(groupName);
 
         if(existingObject == null) existingObject = (T) FilterUtil.instantiateObject(newObject.getClass());
 
-        Access access = accessMap.get(newObject.getClass().getName());
+        Access<? extends Permission> access = accessMap.get(newObject.getClass().getName());
         if(access == null) throw new FilterException(String.format("No access defined for class %s and group %s", newObject.getClass().getName(), groupName));
         // If the user doesn't have access to change things, return the object that was there before they started
         if (access.getAccess().equals(AccessType.NO_ACCESS) || access.getAccess().equals(AccessType.READ)) return existingObject;
@@ -496,7 +495,7 @@ public class PropertyFilter {
                             Collection newCollection = (Collection)newValue;
                             Collection existingCollection = (Collection) PropertyUtils.getProperty(existingObject, f.getName());
                             // Parse the collection and get one containing all the new values
-                            Collection resultingCollection = handleCollectionsForSaving(existingCollection, newCollection, username, groupName);
+                            Collection<?> resultingCollection = handleCollectionsForSaving(existingCollection, newCollection, username, groupName);
                             if(existingCollection == null){ // If the collection was null then we need to instantiate it
                                 existingCollection = FilterUtil.instantiateCollection(f.getType());
                                 PropertyUtils.setProperty(existingObject, f.getName(), existingCollection);

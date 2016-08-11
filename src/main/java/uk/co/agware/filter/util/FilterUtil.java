@@ -26,13 +26,13 @@ public class FilterUtil {
     private final Logger LOGGER = LoggerFactory.getLogger(FilterUtil.class);
     private AccessType DEFAULT_ACCESS_TYPE = AccessType.NO_ACCESS;
     private PermissionType DEFAULT_PERMISSION_TYPE = PermissionType.NO_ACCESS;
-    private ClassFactory classFactory;
+    private ClassFactory<? extends Access<? extends Permission>, ? extends Permission> classFactory;
 
-    public FilterUtil(ClassFactory classFactory) {
+    public FilterUtil(ClassFactory<? extends Access<? extends Permission>, ? extends Permission> classFactory) {
         this.classFactory = classFactory;
     }
 
-    public ClassFactory getClassFactory() {
+    public ClassFactory<? extends Access<? extends Permission>, ? extends Permission> getClassFactory() {
         return classFactory;
     }
 
@@ -68,9 +68,9 @@ public class FilterUtil {
         return getAllFields(o.getClass());
     }
 
-    public Set<Field> getAllFields(Class c){
+    public Set<Field> getAllFields(Class<?> c){
         Set<Field> fields = new HashSet<>();
-        Class clazz = c;
+        Class<?> clazz = c;
         do {
             fields.addAll(Arrays.asList(clazz.getDeclaredFields()));
             clazz = clazz.getSuperclass();
@@ -79,7 +79,7 @@ public class FilterUtil {
     }
 
     @SuppressWarnings("unchecked")
-    public List<Class> getAllClasses(String path){
+    public List<Class<?>> getAllClasses(String path){
         try {
             ClassPath classPath = ClassPath.from(Thread.currentThread().getContextClassLoader());
             Set<ClassPath.ClassInfo> classInfo = classPath.getTopLevelClasses(path);
@@ -90,19 +90,19 @@ public class FilterUtil {
         }
     }
 
-    public List<Class> getAllAvailableClasses(List<Class> classes){
+    public List<Class<?>> getAllAvailableClasses(List<Class<?>> classes){
         return classes.stream().filter(c -> !Modifier.isAbstract(c.getModifiers()) && c.isAnnotationPresent(FilterTarget.class)).collect(Collectors.toList());
     }
 
-    public List<Class> getAllIgnoredClasses(String path){
+    public List<Class<?>> getAllIgnoredClasses(String path){
         return getAllClasses(path).stream().filter(c -> c.isAnnotationPresent(FilterIgnored.class)).collect(Collectors.toList());
     }
 
     /* Returns a complete list of all non-hidden objects and fields for all classes */
-    public <T extends Access> List<T> getFullAccessList(String path){
-        List<Class> classes = getAllAvailableClasses(getAllClasses(path));
+    public <T extends Access<? extends Permission>> List<T> getFullAccessList(String path){
+        List<Class<?>> classes = getAllAvailableClasses(getAllClasses(path));
         List<T> objects = new ArrayList<>();
-        for(Class c : classes){
+        for(Class<?> c : classes){
             T access = createDefaultAccessFromClass(c);
             objects.add(access);
         }
@@ -110,8 +110,9 @@ public class FilterUtil {
         return objects;
     }
 
-    public <T extends Access> T createDefaultAccessFromClass(Class c){
-        T access = buildBaseAccess(c);
+    @SuppressWarnings("unchecked")
+    public <T extends Access> T createDefaultAccessFromClass(Class<?> c){
+        Access access = buildBaseAccess(c);
         List<Permission> permissions = new ArrayList<>();
         for(Field f : getAllFields(c)){
             Permission permission = classFactory.createPermissionClass();
@@ -137,14 +138,14 @@ public class FilterUtil {
         }
         Collections.sort(permissions);
         access.setPermissions(permissions);
-        return access;
+        return (T) access;
     }
 
-    public <T extends Access> T buildBaseAccess(Class c){
+    public <T extends Access<? extends Permission>> T buildBaseAccess(Class<?> c){
         T access = (T) classFactory.createAccessClass();
         access.setObjectClass(c.getName());
 
-        FilterTarget ft = (FilterTarget) c.getAnnotation(FilterTarget.class);
+        FilterTarget ft = c.getAnnotation(FilterTarget.class);
         if(ft == null) throw new FilterException(String.format("Class %s appeared without a FilterTarget Annotation present", c.getName()));
         access.setDisplayName("".equals(ft.value()) ? c.getName() : ft.value());
 
@@ -172,7 +173,7 @@ public class FilterUtil {
     }
 
     /* Static Helper Methods */
-    public static Object instantiateObject(Class clazz) {
+    public static Object instantiateObject(Class<?> clazz) {
         if(Collection.class.isAssignableFrom(clazz)){
             return instantiateCollection(clazz);
         }
@@ -188,11 +189,11 @@ public class FilterUtil {
         }
     }
 
-    public static Collection instantiateCollection(Class collection){
+    public static <T> Collection<T> instantiateCollection(Class<?> collection){
         if(Set.class.isAssignableFrom(collection)){
-            return new HashSet();
+            return new HashSet<>();
         }
-        return new ArrayList();
+        return new ArrayList<>();
     }
 
     // Returns and empty list if the collection passed in is null

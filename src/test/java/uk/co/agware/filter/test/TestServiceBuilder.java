@@ -9,7 +9,6 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import uk.co.agware.filter.PropertyFilter;
 import uk.co.agware.filter.PropertyFilterBuilder;
-import uk.co.agware.filter.data.Group;
 import uk.co.agware.filter.exceptions.PropertyFilterException;
 import uk.co.agware.filter.impl.GroupImpl;
 import uk.co.agware.filter.persistence.FilterRepository;
@@ -154,13 +153,13 @@ public class TestServiceBuilder extends Mockito {
 
     @Test
     public void testMultipleRunTimeGroups(){
-        List<Group> runTimeGroups = new ArrayList<>();
+        List<GroupImpl> runTimeGroups = new ArrayList<>();
         PropertyFilter filter = mock(PropertyFilter.class);
         when(filter.getFilterUtil()).thenReturn(filterUtil);
-        Group group = new GroupImpl();
+        GroupImpl group = new GroupImpl();
         group.setName("Group Name");
         runTimeGroups.add(group);
-        Group group2 = new GroupImpl();
+        GroupImpl group2 = new GroupImpl();
         group.setName("Group 2");
         runTimeGroups.add(group2);
 

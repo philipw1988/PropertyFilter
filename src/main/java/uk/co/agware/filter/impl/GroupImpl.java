@@ -1,5 +1,6 @@
 package uk.co.agware.filter.impl;
 
+import uk.co.agware.filter.data.Access;
 import uk.co.agware.filter.data.Group;
 
 import java.util.List;
@@ -65,7 +66,7 @@ public class GroupImpl implements Group<AccessImpl> {
     }
 
     @Override
-    public int compareTo(Group o) {
+    public int compareTo(Group<? extends Access> o) {
         if(this.name == null) return -1;
         if(o.getName() == null) return 1;
         return this.name.compareTo(o.getName());

@@ -55,7 +55,7 @@ public class TestPropertyFilter {
     @Test
     public void testLoad() throws PropertyFilterException {
         Assert.assertEquals(propertyFilter.getUsersGroup(username), groupName);
-        Map<String, Access> storedGroup = propertyFilter.getGroup(propertyFilter.getUsersGroup(username));
+        Map<String, Access<? extends Permission>> storedGroup = propertyFilter.getGroup(propertyFilter.getUsersGroup(username));
         Assert.assertEquals(5, storedGroup.keySet().size());
         Assert.assertTrue(storedGroup.keySet().contains(TestClass.class.getName()));
         Assert.assertTrue(storedGroup.keySet().contains(NoPublicConstructor.class.getName()));

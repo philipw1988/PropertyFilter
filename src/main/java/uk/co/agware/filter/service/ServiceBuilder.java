@@ -1,7 +1,9 @@
 package uk.co.agware.filter.service;
 
 import uk.co.agware.filter.PropertyFilter;
+import uk.co.agware.filter.data.Access;
 import uk.co.agware.filter.data.Group;
+import uk.co.agware.filter.data.Permission;
 import uk.co.agware.filter.impl.PseudoRepository;
 import uk.co.agware.filter.persistence.FilterRepository;
 
@@ -19,10 +21,10 @@ import java.util.*;
 public class ServiceBuilder {
 
     private PropertyFilter propertyFilter = null;
-    private FilterRepository repository = new PseudoRepository();
+    private FilterRepository<? extends Group<? extends Access<? extends Permission>>> repository = new PseudoRepository();
     private Set<String> packagesToScan = null;
     private Map<String, String> staticGroupAllocations = new HashMap<>();
-    private List<Group> runTimeGroups = new ArrayList<>();
+    private List<Group<? extends Access<? extends Permission>>> runTimeGroups = new ArrayList<>();
 
     /**
      * Initialize the builder with a {@link PropertyFilter}
@@ -40,7 +42,7 @@ public class ServiceBuilder {
      * @param repository The repository implementation
      * @return Self
      */
-    public ServiceBuilder withRepository(FilterRepository repository){
+    public ServiceBuilder withRepository(FilterRepository<Group<? extends Access<? extends Permission>>> repository){
         this.repository = repository;
         return this;
     }
@@ -95,7 +97,7 @@ public class ServiceBuilder {
      * @param group The group to add
      * @return Self
      */
-    public ServiceBuilder addRunTimeGroup(Group group){
+    public ServiceBuilder addRunTimeGroup(Group<? extends Access<? extends Permission>> group){
         this.runTimeGroups.add(group);
         return this;
     }
@@ -107,7 +109,7 @@ public class ServiceBuilder {
      * @param groups A collection of groups that do not need to be saved
      * @return Self
      */
-    public ServiceBuilder addRunTimeGroups(Collection<Group> groups){
+    public ServiceBuilder addRunTimeGroups(Collection<? extends Group<? extends Access<? extends Permission>>> groups){
         this.runTimeGroups.addAll(groups);
         return this;
     }

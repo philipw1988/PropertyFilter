@@ -16,7 +16,7 @@ import java.util.Set;
  */
 public class PropertyFilterBuilder {
 
-    private Set<Class> ignoredClasses = new HashSet<>();
+    private Set<Class<?>> ignoredClasses = new HashSet<>();
     private FilterUtil filterUtil = new FilterUtil(new DefaultClassFactory());
     private boolean filterCollectionsOnLoad = true;
     private boolean filterRelationsOnLoad = true;
@@ -56,7 +56,7 @@ public class PropertyFilterBuilder {
      * @param clazz The class to be ignored
      * @return Returns itself
      */
-    public PropertyFilterBuilder addIgnoredClass(Class clazz){
+    public PropertyFilterBuilder addIgnoredClass(Class<?> clazz){
         if(!ignoredClasses.contains(clazz)){
             ignoredClasses.add(clazz);
         }
@@ -69,7 +69,7 @@ public class PropertyFilterBuilder {
      * @param classes A collection of Classes to be ignored
      * @return Returns itself
      */
-    public PropertyFilterBuilder addIgnoredClasses(Collection<Class> classes){
+    public PropertyFilterBuilder addIgnoredClasses(Collection<Class<?>> classes){
         ignoredClasses.addAll(classes);
         return this;
     }
@@ -131,6 +131,11 @@ public class PropertyFilterBuilder {
      * @return An initialized {@link PropertyFilter}
      */
     public PropertyFilter build(){
-        return new PropertyFilter(filterUtil, ignoredClasses, filterCollectionsOnLoad, filterRelationsOnLoad, filterCollectionsOnSave, filterRelationsOnSave);
+        return new PropertyFilter(filterUtil,
+                ignoredClasses,
+                filterCollectionsOnLoad,
+                filterRelationsOnLoad,
+                filterCollectionsOnSave,
+                filterRelationsOnSave);
     }
 }

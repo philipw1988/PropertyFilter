@@ -24,13 +24,17 @@ public class FilterService {
     private final Logger logger = LoggerFactory.getLogger(FilterService.class);
 
     private PropertyFilter propertyFilter;
-    private FilterRepository<? extends Group<? extends Access>> repository;
+    private FilterRepository<? extends Group<? extends Access<? extends Permission>>> repository;
     private Set<String> packagesToScan;
     private Map<String, String> staticGroupAllocation;
-    private List<? extends Group> runTimeGroups;
+    private List<? extends Group<? extends Access>> runTimeGroups;
 
     /* Package local constructor for builder to use */
-    FilterService(PropertyFilter propertyFilter, FilterRepository<? extends Group<? extends Access>> repository, Set<String> packagesToScan, Map<String, String> staticGroupAllocation, List<Group> runTimeGroups) {
+    FilterService(PropertyFilter propertyFilter,
+                  FilterRepository<? extends Group<? extends Access<? extends Permission>>> repository,
+                  Set<String> packagesToScan,
+                  Map<String, String> staticGroupAllocation,
+                  List<? extends Group<? extends Access<? extends Permission>>> runTimeGroups) {
         this.propertyFilter = propertyFilter;
         this.repository = repository;
         this.packagesToScan = packagesToScan;
@@ -51,8 +55,8 @@ public class FilterService {
      * and adds those to the list in {@link PropertyFilter} that stops it from attempting to process the values in that class.
      */
     public void init(){
-        List<? extends Group<? extends Access>> groups = repository.initGroups();
-        List<Access> allClasses = new ArrayList<>();
+        List<? extends Group<? extends Access<? extends Permission>>> groups = repository.initGroups();
+        List<Access<? extends Permission>> allClasses = new ArrayList<>();
         for(String s : packagesToScan){
             allClasses.addAll(FilterUtil.nullSafe(propertyFilter.getFilterUtil().getFullAccessList(s)));
         }
@@ -83,20 +87,23 @@ public class FilterService {
      * @return The group object with the correct values set
      */
     @SuppressWarnings("unchecked")
-    private Group removeOldClasses(Group<? extends Access> group, List<? extends Access> allClasses){
+    private Group<? extends Access> removeOldClasses(Group<? extends Access> group, List<? extends Access> allClasses){
         // Split the group's access classes into ones that are in the allClasses list and ones that aren't
-        Map<Boolean, List<Access<? extends Permission>>> accessGroups = FilterUtil.nullSafeStream(group.getAccess()).collect(Collectors.partitioningBy(allClasses::contains));
+        Map<Boolean, List<Access>> accessGroups = FilterUtil.nullSafeStream(group.getAccess()).collect(Collectors.partitioningBy(allClasses::contains));
         // Log the removed ones
         accessGroups.get(Boolean.FALSE).forEach(access -> logger.info("Removing old access for class {} from group {}", access.getObjectClass(), group.getName()));
         // These are ones in the allClasses group
-        List<Access<? extends Permission>> remainingAccess = accessGroups.get(Boolean.TRUE);
+        List<Access> remainingAccess = accessGroups.get(Boolean.TRUE);
 
         remainingAccess.forEach(access -> {
             // Get the matching access from the "all" list
-            Access matchingAllAccess = allClasses.stream().filter(a -> access.getObjectClass().equals(a.getObjectClass())).findFirst().orElse(null);
+            Access<? extends Permission> matchingAllAccess = allClasses.stream().filter(a -> access.getObjectClass().equals(a.getObjectClass())).findFirst().orElse(null);
             // Split into exists and doesn't exist
-            Map<Boolean, List<Permission>> permissionGroups = FilterUtil.nullSafeStream(access.getPermissions())
+            Map<Boolean, List<Permission>> permissionGroups = (Map<Boolean, List<Permission>>)FilterUtil.nullSafeStream(access.getPermissions())
                                                                         .collect(Collectors.partitioningBy(p -> FilterUtil.nullSafe(matchingAllAccess.getPermissions()).contains(p)));
+
+
+
             // Log the removed ones
             permissionGroups.get(Boolean.FALSE).forEach(permission -> logger.info("Removing old permission for field {} on class {} in group {}", permission.getPropertyName(), access.getObjectClass(), group.getName()));
             // Add the survivors back into the access
@@ -124,7 +131,7 @@ public class FilterService {
      * @return The group with the updated access list
      */
     @SuppressWarnings("unchecked")
-    private Group addNewAccess(Group<? extends Access> group, List<? extends Access> allAccess){
+    private Group<? extends Access> addNewAccess(Group<? extends Access> group, List<? extends Access<? extends Permission>> allAccess){
         // Split the all access list into ones that exist and ones that don't as they're processed differently
         Map<Boolean, List<Access>> accessGroups = allAccess.stream().collect(Collectors.partitioningBy(a -> FilterUtil.nullSafe(group.getAccess()).contains(a)));
         // Split the existing access list into hard coded (from an annotation) or not
@@ -166,7 +173,7 @@ public class FilterService {
      * @return The updated {@link Access} entity
      */
     @SuppressWarnings("unchecked")
-    private Access updateAccessPermissions(Access<? extends Permission> access, List<Permission> allPermissions, String groupName){
+    private Access<? extends Permission> updateAccessPermissions(Access<? extends Permission> access, List<Permission> allPermissions, String groupName){
         // Split into existing and not existing
         Map<Boolean, List<Permission>> permissionGroups = FilterUtil.nullSafeStream(allPermissions).collect(Collectors.partitioningBy(p -> FilterUtil.nullSafe(access.getPermissions()).contains(p)));
         // Split into modifiable and not
@@ -199,12 +206,10 @@ public class FilterService {
     @SuppressWarnings("unchecked")
     private void setGroups(List<? extends Group<? extends Access>> groups){
         // TODO Fairly certain this is really stupid, but I'm in a hurry and generics aren't playing nice here for some reason
-        List<Group> allGroups = new ArrayList<>();
-        List<Group> castGroups = (List<Group>) groups;
-        List<Group> castRuntime = (List<Group>) runTimeGroups;
-        allGroups.addAll(castGroups);
-        allGroups.addAll(castRuntime);
-        propertyFilter.setGroups((List<? extends Group<? extends Access>>) allGroups);
+        List<Group<? extends Access>> allGroups = new ArrayList<>();
+        allGroups.addAll(groups);
+        allGroups.addAll(runTimeGroups);
+        propertyFilter.setGroups(allGroups);
         // Add the static allocations into the group map, this is mainly for either overrides, or virtual users such as system users that might need a group
         staticGroupAllocation.entrySet().forEach(e -> propertyFilter.addUserToGroup(e.getKey(), e.getValue()));
     }
@@ -244,7 +249,7 @@ public class FilterService {
      * @param id The ID of the group
      * @return The matching {@link Group}
      */
-    public Group getGroup(String id){
+    public Group<? extends Access<? extends Permission>> getGroup(String id){
         return repository.getGroup(id);
     }
 
@@ -253,8 +258,8 @@ public class FilterService {
      * @return A list of saved groups
      */
     @SuppressWarnings("unchecked")
-    public List<Group> getGroups(){
-        return (List<Group>) repository.getGroups();
+    public List<? extends Group<? extends Access<? extends Permission>>> getGroups(){
+        return repository.getGroups();
     }
 
     /**
@@ -274,9 +279,9 @@ public class FilterService {
      * @param group The group to be saved
      */
     @SuppressWarnings("unchecked")
-    public Object saveGroup(Group group){
+    public Object saveGroup(Group<? extends Access<? extends Permission>> group){
         Object id = repository.save(group);
-        List<? extends Group<? extends Access>> groups = (List<? extends Group<? extends Access>>) repository.getGroups();
+        List<? extends Group<? extends Access<? extends Permission>>> groups = repository.getGroups();
         setGroups(groups);
         return id;
     }
@@ -290,27 +295,27 @@ public class FilterService {
      * They also convert a call from a username to a "*forGroup()" call by first getting the
      * group name of the user passed in before returning the call to the filter.
      */
-    public Access getAccessForGroup(Object target, String groupName) throws PropertyFilterException {
+    public Access<? extends Permission> getAccessForGroup(Object target, String groupName) throws PropertyFilterException {
         return getAccessForGroup(target.getClass().getName(), groupName);
     }
 
-    public Access getAccessForGroup(Class clazz, String groupName) throws PropertyFilterException {
+    public Access<? extends Permission> getAccessForGroup(Class<?> clazz, String groupName) throws PropertyFilterException {
         return getAccessForGroup(clazz.getName(), groupName);
     }
 
-    public Access getAccessForGroup(String className, String groupName) throws PropertyFilterException {
+    public Access<? extends Permission> getAccessForGroup(String className, String groupName) throws PropertyFilterException {
         return propertyFilter.getAccess(className, groupName);
     }
 
-    public Access getAccess(Object target, String username) throws PropertyFilterException {
+    public Access<? extends Permission> getAccess(Object target, String username) throws PropertyFilterException {
         return getAccess(target.getClass().getName(), username);
     }
 
-    public Access getAccess(Class clazz, String username) throws PropertyFilterException {
+    public Access<? extends Permission> getAccess(Class<?> clazz, String username) throws PropertyFilterException {
         return getAccess(clazz.getName(), username);
     }
 
-    public Access getAccess(String className, String username) throws PropertyFilterException {
+    public Access<? extends Permission> getAccess(String className, String username) throws PropertyFilterException {
         return propertyFilter.getAccess(className, username);
     }
 
@@ -318,7 +323,7 @@ public class FilterService {
         return getAccessibleFields(target.getClass().getName(), username);
     }
 
-    public List<? extends Permission> getAccessibleFields(Class clazz, String username) throws PropertyFilterException {
+    public List<? extends Permission> getAccessibleFields(Class<?> clazz, String username) throws PropertyFilterException {
         return getAccessibleFields(clazz.getName(), username);
     }
 
@@ -334,7 +339,7 @@ public class FilterService {
         return getAccessibleFieldsForGroup(target.getClass().getName(), group);
     }
 
-    public List<? extends Permission> getAccessibleFieldsForGroup(Class clazz, String group) throws PropertyFilterException {
+    public List<? extends Permission> getAccessibleFieldsForGroup(Class<?> clazz, String group) throws PropertyFilterException {
         return getAccessibleFieldsForGroup(clazz.getName(), group);
     }
 
