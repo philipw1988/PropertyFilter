@@ -1,7 +1,5 @@
 package uk.co.agware.filter.impl;
 
-import uk.co.agware.filter.data.Access;
-import uk.co.agware.filter.data.Permission;
 import uk.co.agware.filter.util.ClassFactory;
 import uk.co.agware.filter.util.FilterUtil;
 
@@ -10,7 +8,7 @@ import java.util.stream.Collectors;
 /**
  * Created by Philip Ward <Philip.Ward@agware.com> on 24/06/2016.
  */
-public class DefaultClassFactory implements ClassFactory {
+public class DefaultClassFactory implements ClassFactory<AccessImpl, PermissionImpl> {
 
     @Override
     public AccessImpl createAccessClass() {
@@ -18,7 +16,7 @@ public class DefaultClassFactory implements ClassFactory {
     }
 
     @Override
-    public AccessImpl copyAccessClass(Access old) {
+    public AccessImpl copyAccessClass(AccessImpl old) {
         AccessImpl access = new AccessImpl();
         if(old == null) throw new IllegalArgumentException("Trying to create a copy of a null Access");
         access.setObjectClass(old.getObjectClass());
@@ -35,7 +33,7 @@ public class DefaultClassFactory implements ClassFactory {
     }
 
     @Override
-    public PermissionImpl copyPermissionClass(Permission old) {
+    public PermissionImpl copyPermissionClass(PermissionImpl old) {
         PermissionImpl permission = new PermissionImpl();
         if(old == null) throw new IllegalArgumentException("Trying to create a copy of a null Permission");
         permission.setPropertyName(old.getPropertyName());

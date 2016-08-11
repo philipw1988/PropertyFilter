@@ -44,7 +44,7 @@ public class FilterUtil {
         DEFAULT_PERMISSION_TYPE = defaultPermissionType;
     }
 
-    public boolean isFieldReadable(String fieldName, Access access){
+    public boolean isFieldReadable(String fieldName, Access<? extends Permission> access){
         for(Permission p : nullSafe(access.getPermissions())){
             if(p.getPropertyName().equals(fieldName)){
                 return !p.getPermission().equals(PermissionType.NO_ACCESS);
@@ -54,7 +54,7 @@ public class FilterUtil {
         throw new FilterException(String.format("No permission defined for field %s on object %s", fieldName, access.getObjectClass()));
     }
 
-    public boolean isFieldWritable(String fieldName, Access access){
+    public boolean isFieldWritable(String fieldName, Access<? extends Permission> access){
         for(Permission p : nullSafe(access.getPermissions())){
             if(p.getPropertyName().equals(fieldName)){
                 return !p.getPermission().equals(PermissionType.NO_ACCESS) && !p.getPermission().equals(PermissionType.READ);

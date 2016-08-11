@@ -29,7 +29,7 @@ import java.util.*;
 public class TestFilterService extends Mockito {
 
     @Captor
-    private ArgumentCaptor<List<Group>> groupsCaptor;
+    private ArgumentCaptor<List<GroupImpl>> groupsCaptor;
 
     private FilterUtil filterUtil;
     private PropertyFilter propertyFilter;
@@ -81,7 +81,7 @@ public class TestFilterService extends Mockito {
     public void testInitSetsGroups(){
         filterService.init();
         verify(propertyFilter).setGroups(groupsCaptor.capture());
-        List<Group> groups = groupsCaptor.getValue();
+        List<GroupImpl> groups = groupsCaptor.getValue();
         Assert.assertEquals(1, groups.size());
     }
 
@@ -121,14 +121,14 @@ public class TestFilterService extends Mockito {
         // When init is called, the service will get an access list with an additional permission for TestClass
         when(filterUtil.getFullAccessList(anyString())).thenReturn(getTestGroupWithExtraPermission().getAccess());
         filterService.init();
-        ArgumentCaptor<Group> groupArgument = ArgumentCaptor.forClass(Group.class);
+        ArgumentCaptor<GroupImpl> groupArgument = ArgumentCaptor.forClass(GroupImpl.class);
         verify(filterRepository).save(groupArgument.capture());
-        Group savedGroup = groupArgument.getValue();
+        GroupImpl savedGroup = groupArgument.getValue();
         Assert.assertNotNull(savedGroup);
         Assert.assertEquals(2, savedGroup.getAccess().size());
         Assert.assertTrue(savedGroup.getAccess().contains(new AccessImpl(TestClass.class.getName(), AccessType.NO_ACCESS, true)));
 
-        Access access = savedGroup.getAccess().get(savedGroup.getAccess().indexOf(new AccessImpl(TestClass.class.getName(), AccessType.NO_ACCESS, true)));
+        AccessImpl access = savedGroup.getAccess().get(savedGroup.getAccess().indexOf(new AccessImpl(TestClass.class.getName(), AccessType.NO_ACCESS, true)));
         Assert.assertNotNull(access);
         Assert.assertEquals(5, access.getPermissions().size());
         Permission permission = access.getPermissions().stream().filter(p -> p.getPropertyName().equals("newField")).findFirst().get();
@@ -145,13 +145,13 @@ public class TestFilterService extends Mockito {
         // Filter util will return a class without the extra permission
         when(filterUtil.getFullAccessList(anyString())).thenReturn(getTestGroup().getAccess());
         filterService.init();
-        ArgumentCaptor<Group> groupArgument = ArgumentCaptor.forClass(Group.class);
+        ArgumentCaptor<GroupImpl> groupArgument = ArgumentCaptor.forClass(GroupImpl.class);
         verify(filterRepository).save(groupArgument.capture());
-        Group savedGroup = groupArgument.getValue();
+        GroupImpl savedGroup = groupArgument.getValue();
         Assert.assertNotNull(savedGroup);
         Assert.assertEquals(2, savedGroup.getAccess().size());
 
-        Access access = savedGroup.getAccess().get(savedGroup.getAccess().indexOf(new AccessImpl(TestClass.class.getName(), AccessType.NO_ACCESS, true)));
+        AccessImpl access = savedGroup.getAccess().get(savedGroup.getAccess().indexOf(new AccessImpl(TestClass.class.getName(), AccessType.NO_ACCESS, true)));
         Assert.assertNotNull(access);
         Assert.assertEquals(4, access.getPermissions().size());
         Permission permission = access.getPermissions().stream().filter(p -> p.getPropertyName().equals("newField")).findFirst().orElse(null);
@@ -159,16 +159,16 @@ public class TestFilterService extends Mockito {
     }
 
     private Group getTestGroup(){
-        GroupImpl group = new GroupImpl();
+        Group group = new GroupImpl();
         group.setName("Test Group");
         group.setMembers(Collections.singletonList("Test User"));
         group.setAccess(getTestAccessList());
         return group;
     }
 
-    private List<Access> getTestAccessList(){
+    private List<AccessImpl> getTestAccessList(){
         FilterUtil filterUtil = new FilterUtil(new DefaultClassFactory());
-        List<Access> accessList = new ArrayList<>();
+        List<AccessImpl> accessList = new ArrayList<>();
         accessList.add(filterUtil.createDefaultAccessFromClass(TestClass.class));
         accessList.add(filterUtil.createDefaultAccessFromClass(SecondTestClass.class));
         return accessList;
@@ -187,7 +187,7 @@ public class TestFilterService extends Mockito {
     }
 
     private Group getTestGroupWithExtraPermission(){
-        Group group = getTestGroup();
+        GroupImpl group = (GroupImpl) getTestGroup();
         Access accessToChange = group.getAccess().stream().filter(access -> access.getObjectClass().equals(TestClass.class.getName())).findFirst().get();
         Permission permission = new PermissionImpl();
         permission.setModifiable(true);

@@ -32,7 +32,7 @@ public class TestServiceBuilder extends Mockito {
     private FilterUtil filterUtil;
 
     @Captor
-    private ArgumentCaptor<List<Group>> groupsCaptor;
+    private ArgumentCaptor<List<GroupImpl>> groupsCaptor;
 
     @Before
     public void setUp(){
@@ -139,7 +139,7 @@ public class TestServiceBuilder extends Mockito {
     public void testRunTimeGroup(){
         PropertyFilter filter = mock(PropertyFilter.class);
         when(filter.getFilterUtil()).thenReturn(filterUtil);
-        Group group = new GroupImpl();
+        GroupImpl group = new GroupImpl();
         group.setName("Group Name");
         FilterService service = new ServiceBuilder(filter)
                 .addPackageToScan("test.package")

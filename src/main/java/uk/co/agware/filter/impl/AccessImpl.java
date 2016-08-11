@@ -1,21 +1,20 @@
 package uk.co.agware.filter.impl;
 
-import uk.co.agware.filter.data.AccessType;
 import uk.co.agware.filter.data.Access;
-import uk.co.agware.filter.data.Permission;
+import uk.co.agware.filter.data.AccessType;
 
 import java.util.List;
 
 /**
  * Created by Philip Ward <Philip.Ward@agware.com> on 17/09/2015.
  */
-public class AccessImpl implements Access {
+public class AccessImpl implements Access<PermissionImpl> {
 
     private String objectClass;
     private String displayName;
     private AccessType access;
     private boolean modifiable;
-    private List<Permission> permissions;
+    private List<PermissionImpl> permissions;
 
     public AccessImpl() {
         modifiable = false;
@@ -58,13 +57,13 @@ public class AccessImpl implements Access {
     }
 
     @Override
-    public List<Permission> getPermissions() {
+    public List<PermissionImpl> getPermissions() {
         return permissions;
     }
 
     @Override
-    public <T extends Permission> void setPermissions(List<T> permissions) {
-        this.permissions = (List<Permission>) permissions;
+    public void setPermissions(List<PermissionImpl> permissions) {
+        this.permissions = permissions;
     }
 
     @Override

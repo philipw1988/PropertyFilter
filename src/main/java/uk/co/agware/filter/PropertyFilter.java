@@ -125,11 +125,11 @@ public class PropertyFilter {
      *
      * @param GroupList The groups to add to the mapping
      */
-    public void setGroups(List<Group> GroupList) {
+    public void setGroups(List<? extends Group<? extends Access>> GroupList) {
         lock.writeLock().lock();
         groups.clear();
         userToGroup.clear();
-        for (Group g : FilterUtil.nullSafe(GroupList)) {
+        for (Group<? extends Access> g : FilterUtil.nullSafe(GroupList)) {
             Map<String, Access> accessMap = new HashMap<>();
             for (Access a : FilterUtil.nullSafe(g.getAccess())) {
                 accessMap.put(a.getObjectClass(), a);
@@ -273,10 +273,10 @@ public class PropertyFilter {
      * @return A list of {@link Permission} entities for the class
      * @throws PropertyFilterException If the group does not exist
      */
-    public List<Permission> getAccessibleFields(String className, String group){
+    public List<? extends Permission> getAccessibleFields(String className, String group){
         lock.readLock().lock();
         try {
-            Access access = getAccessForGroup(className, group);
+            Access<? extends Permission> access = getAccessForGroup(className, group);
             if(access == null) throw new FilterException(String.format("Group %s does not have Access defined for class %s", group, className));
             return FilterUtil.nullSafeStream(access.getPermissions())
                     .filter(p -> p.getPermission() != PermissionType.NO_ACCESS)
@@ -310,9 +310,9 @@ public class PropertyFilter {
      * @param className The name of the class to get the access for
      * @param groupName The name of the group to get the access for
      * @return The {@link Access} object for the given class for the given group
-     * @throws PropertyFilterException If the given {@code group} does not exist
      */
-    public Access getAccessForGroup(String className, String groupName){
+    @SuppressWarnings("unchecked")
+    public Access<? extends Permission> getAccessForGroup(String className, String groupName){
         lock.readLock().lock();
         try {
             Map<String, Access> accessMap = getGroup(groupName);

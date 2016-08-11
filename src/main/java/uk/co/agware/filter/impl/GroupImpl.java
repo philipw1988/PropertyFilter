@@ -1,6 +1,5 @@
 package uk.co.agware.filter.impl;
 
-import uk.co.agware.filter.data.Access;
 import uk.co.agware.filter.data.Group;
 
 import java.util.List;
@@ -8,11 +7,11 @@ import java.util.List;
 /**
  * Created by Philip Ward <Philip.Ward@agware.com> on 17/09/2015.
  */
-public class GroupImpl implements Group {
+public class GroupImpl implements Group<AccessImpl> {
 
     private String name;
     private List<String> members;
-    private List<Access> access;
+    private List<AccessImpl> access;
 
     public GroupImpl() {
     }
@@ -43,13 +42,13 @@ public class GroupImpl implements Group {
     }
 
     @Override
-    public List<Access> getAccess() {
+    public List<AccessImpl> getAccess() {
         return access;
     }
 
     @Override
-    public <T extends Access> void setAccess(List<T> accessList) {
-        access = (List<Access>) accessList;
+    public void setAccess(List<AccessImpl> accessList) {
+        access = accessList;
     }
 
     @Override

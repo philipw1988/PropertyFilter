@@ -5,12 +5,12 @@ import org.junit.Before;
 import org.junit.Test;
 import uk.co.agware.filter.PropertyFilter;
 import uk.co.agware.filter.PropertyFilterBuilder;
-import uk.co.agware.filter.data.Access;
 import uk.co.agware.filter.data.AccessType;
 import uk.co.agware.filter.data.PermissionType;
 import uk.co.agware.filter.exceptions.FilterException;
 import uk.co.agware.filter.exceptions.GroupNotFoundException;
 import uk.co.agware.filter.exceptions.PropertyFilterException;
+import uk.co.agware.filter.impl.AccessImpl;
 import uk.co.agware.filter.impl.DefaultClassFactory;
 import uk.co.agware.filter.impl.GroupImpl;
 import uk.co.agware.filter.test.classes.SecondTestClass;
@@ -78,7 +78,7 @@ public class TestPropertyFilterReturn {
         propertyFilter = new PropertyFilterBuilder().filterUtil(filterUtil).build();
         filterUtil.setDefaultAccessType(AccessType.NO_ACCESS);
         filterUtil.setDefaultPermissionType(PermissionType.NO_ACCESS);
-        List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        List<AccessImpl> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
         GroupImpl group = new GroupImpl();
         group.setName(groupName);
         group.setAccess(accessList);
@@ -94,7 +94,7 @@ public class TestPropertyFilterReturn {
         propertyFilter = new PropertyFilterBuilder().filterUtil(filterUtil).build();
         filterUtil.setDefaultAccessType(AccessType.NO_ACCESS);
         filterUtil.setDefaultPermissionType(PermissionType.WRITE);
-        List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        List<AccessImpl> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
         GroupImpl group = new GroupImpl();
         group.setName(groupName);
         group.setAccess(accessList);
@@ -110,7 +110,7 @@ public class TestPropertyFilterReturn {
         propertyFilter = new PropertyFilterBuilder().filterUtil(filterUtil).build();
         filterUtil.setDefaultAccessType(AccessType.READ);
         filterUtil.setDefaultPermissionType(PermissionType.NO_ACCESS);
-        List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        List<AccessImpl> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
         GroupImpl group = new GroupImpl();
         group.setName(groupName);
         group.setAccess(accessList);
@@ -129,7 +129,7 @@ public class TestPropertyFilterReturn {
         propertyFilter = new PropertyFilterBuilder().filterUtil(filterUtil).build();
         filterUtil.setDefaultAccessType(AccessType.READ);
         filterUtil.setDefaultPermissionType(PermissionType.READ);
-        List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        List<AccessImpl> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
         GroupImpl group = new GroupImpl();
         group.setName(groupName);
         group.setAccess(accessList);
@@ -149,7 +149,7 @@ public class TestPropertyFilterReturn {
         propertyFilter = new PropertyFilterBuilder().filterUtil(filterUtil).build();
         filterUtil.setDefaultAccessType(AccessType.READ);
         filterUtil.setDefaultPermissionType(PermissionType.READ);
-        List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        List<AccessImpl> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
         GroupImpl group = new GroupImpl();
         group.setName(groupName);
         group.setAccess(accessList);
@@ -164,7 +164,7 @@ public class TestPropertyFilterReturn {
         propertyFilter = new PropertyFilterBuilder().filterUtil(filterUtil).build();
         filterUtil.setDefaultAccessType(AccessType.READ);
         filterUtil.setDefaultPermissionType(PermissionType.READ);
-        List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        List<AccessImpl> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
         GroupImpl group = new GroupImpl();
         group.setName(groupName);
         group.setAccess(accessList);
@@ -184,7 +184,7 @@ public class TestPropertyFilterReturn {
 
         filterUtil.setDefaultAccessType(AccessType.CREATE);
         filterUtil.setDefaultPermissionType(PermissionType.WRITE);
-        List<Access> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
+        List<AccessImpl> accessList = filterUtil.getFullAccessList("uk.co.agware.filter.test.classes");
         GroupImpl group = new GroupImpl();
         group.setName(groupName);
         group.setAccess(accessList);
