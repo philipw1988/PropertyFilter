@@ -24,17 +24,17 @@ public class FilterService {
     private final Logger logger = LoggerFactory.getLogger(FilterService.class);
 
     private PropertyFilter propertyFilter;
-    private FilterRepository<? extends Group<? extends Access<? extends Permission>>> repository;
+    private FilterRepository<? extends Group<? extends Access>> repository;
     private Set<String> packagesToScan;
     private Map<String, String> staticGroupAllocation;
     private List<? extends Group<? extends Access>> runTimeGroups;
 
     /* Package local constructor for builder to use */
     FilterService(PropertyFilter propertyFilter,
-                  FilterRepository<? extends Group<? extends Access<? extends Permission>>> repository,
+                  FilterRepository<? extends Group<? extends Access>> repository,
                   Set<String> packagesToScan,
                   Map<String, String> staticGroupAllocation,
-                  List<? extends Group<? extends Access<? extends Permission>>> runTimeGroups) {
+                  List<? extends Group<? extends Access>> runTimeGroups) {
         this.propertyFilter = propertyFilter;
         this.repository = repository;
         this.packagesToScan = packagesToScan;
@@ -55,7 +55,7 @@ public class FilterService {
      * and adds those to the list in {@link PropertyFilter} that stops it from attempting to process the values in that class.
      */
     public void init(){
-        List<? extends Group<? extends Access<? extends Permission>>> groups = repository.initGroups();
+        List<? extends Group<? extends Access>> groups = repository.initGroups();
         List<Access<? extends Permission>> allClasses = new ArrayList<>();
         for(String s : packagesToScan){
             allClasses.addAll(FilterUtil.nullSafe(propertyFilter.getFilterUtil().getFullAccessList(s)));
@@ -249,7 +249,7 @@ public class FilterService {
      * @param id The ID of the group
      * @return The matching {@link Group}
      */
-    public Group<? extends Access<? extends Permission>> getGroup(String id){
+    public Group<? extends Access> getGroup(String id){
         return repository.getGroup(id);
     }
 
@@ -258,7 +258,7 @@ public class FilterService {
      * @return A list of saved groups
      */
     @SuppressWarnings("unchecked")
-    public List<? extends Group<? extends Access<? extends Permission>>> getGroups(){
+    public List<? extends Group<? extends Access>> getGroups(){
         return repository.getGroups();
     }
 
@@ -279,9 +279,9 @@ public class FilterService {
      * @param group The group to be saved
      */
     @SuppressWarnings("unchecked")
-    public Object saveGroup(Group<? extends Access<? extends Permission>> group){
+    public Object saveGroup(Group<? extends Access> group){
         Object id = repository.save(group);
-        List<? extends Group<? extends Access<? extends Permission>>> groups = repository.getGroups();
+        List<? extends Group<? extends Access>> groups = repository.getGroups();
         setGroups(groups);
         return id;
     }
