@@ -42,7 +42,7 @@ public class ServiceBuilder {
      * @param repository The repository implementation
      * @return Self
      */
-    public ServiceBuilder withRepository(FilterRepository<Group<? extends Access<? extends Permission>>> repository){
+    public ServiceBuilder withRepository(FilterRepository<? extends Group<? extends Access<? extends Permission>>> repository){
         this.repository = repository;
         return this;
     }
