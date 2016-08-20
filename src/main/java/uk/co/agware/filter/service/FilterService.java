@@ -286,6 +286,16 @@ public class FilterService {
         return id;
     }
 
+    public List<? extends Access> getAccessList(String username){
+        String groupName = propertyFilter.getUsersGroup(username);
+        return propertyFilter.getGroup(groupName)
+                             .entrySet()
+                             .stream()
+                             .map(Map.Entry::getValue)
+                             .sorted()
+                             .collect(Collectors.toList());
+    }
+
     /* Delegating calls to PropertyFilter */
     /*
      * All these calls simply extend the limited calls that the property filter accepts
