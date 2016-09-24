@@ -82,7 +82,7 @@ public class FilterUtil {
     public List<Class<?>> getAllClasses(String path){
         try {
             ClassPath classPath = ClassPath.from(Thread.currentThread().getContextClassLoader());
-            Set<ClassPath.ClassInfo> classInfo = classPath.getTopLevelClasses(path);
+            Set<ClassPath.ClassInfo> classInfo = classPath.getTopLevelClassesRecursive(path);
             return classInfo.stream().map(ClassPath.ClassInfo::load).collect(Collectors.toList());
         } catch (IOException e) {
             LOGGER.error(e.getMessage(), e);
