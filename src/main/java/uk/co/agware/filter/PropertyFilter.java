@@ -241,7 +241,14 @@ public class PropertyFilter {
             return access.getAccess() != AccessType.NO_ACCESS;}
         // Simply return false instead of an error
         catch (FilterException e){
-            return false;
+            String fullName = displayToClassNames.get(className);
+            if(fullName == null) fullName = className;
+            try {
+                return ignoredClasses.contains(Class.forName(fullName));
+            }
+            catch (ClassNotFoundException e1) {
+                return false;
+            }
         }
     }
 
