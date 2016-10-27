@@ -77,6 +77,14 @@ public class FilterService {
     }
 
     /**
+     * Reloads the groups from the database into the PropertyFilter
+     */
+    public void refresh(){
+        List<? extends Group<? extends Access>> groups = repository.getGroups();
+        setGroups(groups);
+    }
+
+    /**
      * Uses the master list of Access objects from the PropertyFilter to check
      * a group for old permissions that need to be cleaned up. This method will
      * replace the contents of the existing collection within the group
