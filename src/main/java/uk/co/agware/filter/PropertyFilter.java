@@ -130,6 +130,7 @@ public class PropertyFilter {
         lock.writeLock().lock();
         groups.clear();
         userToGroup.clear();
+        displayToClassNames.clear();
         for (Group<? extends Access> g : FilterUtil.nullSafe(GroupList)) {
             Map<String, Access<? extends Permission>> accessMap = new HashMap<>();
             for (Access<? extends Permission> a : FilterUtil.nullSafe(g.getAccess())) {

@@ -1,14 +1,17 @@
 package uk.co.agware.filter.util;
 
-import com.google.common.reflect.ClassPath;
 import org.apache.commons.lang3.StringUtils;
+import org.reflections.Reflections;
+import org.reflections.scanners.SubTypesScanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.co.agware.filter.annotations.*;
-import uk.co.agware.filter.data.*;
+import uk.co.agware.filter.data.Access;
+import uk.co.agware.filter.data.AccessType;
+import uk.co.agware.filter.data.Permission;
+import uk.co.agware.filter.data.PermissionType;
 import uk.co.agware.filter.exceptions.FilterException;
 
-import java.io.IOException;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -80,22 +83,21 @@ public class FilterUtil {
 
     @SuppressWarnings("unchecked")
     public List<Class<?>> getAllClasses(String path){
-        try {
-            ClassPath classPath = ClassPath.from(Thread.currentThread().getContextClassLoader());
-            Set<ClassPath.ClassInfo> classInfo = classPath.getTopLevelClassesRecursive(path);
-            return classInfo.stream().map(ClassPath.ClassInfo::load).collect(Collectors.toList());
-        } catch (IOException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new FilterException("An issue occurred while trying to read objects on the ClassPath " +path);
-        }
+        Reflections reflections = new Reflections(path, new SubTypesScanner(false));
+        Set<Class<?>> classes = reflections.getSubTypesOf(Object.class);
+        return new ArrayList<>(classes);
     }
 
     public List<Class<?>> getAllAvailableClasses(List<Class<?>> classes){
-        return classes.stream().filter(c -> !Modifier.isAbstract(c.getModifiers()) && c.isAnnotationPresent(FilterTarget.class)).collect(Collectors.toList());
+        return classes.stream()
+                      .filter(c -> !Modifier.isAbstract(c.getModifiers()) && c.isAnnotationPresent(FilterTarget.class))
+                      .collect(Collectors.toList());
     }
 
     public List<Class<?>> getAllIgnoredClasses(String path){
-        return getAllClasses(path).stream().filter(c -> c.isAnnotationPresent(FilterIgnored.class)).collect(Collectors.toList());
+        return getAllClasses(path).stream()
+                                  .filter(c -> c.isAnnotationPresent(FilterIgnored.class))
+                                  .collect(Collectors.toList());
     }
 
     /* Returns a complete list of all non-hidden objects and fields for all classes */
